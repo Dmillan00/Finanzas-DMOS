@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Modelo de Cuenta
+
+model Cuenta {
+  cuentaId      Int          @id @default(autoincrement())
+  nombre        String
+  saldoInicial  Decimal      @db.Decimal(10, 2)
+  cuentaBase    Movimiento[] @relation("cuentaBase")
+  cuentaDestino Movimiento[] @relation("cuentaDestino")
+}
+
+enum TipoMovimiento {
+  INGRESO
+  GASTO
+  TRANSFERENCIA
+}
+
+// Modelo de Movimiento
+
+model Movimiento {
+  movimientoId    Int            @id @default(autoincrement())
+  nombre          String
+  monto           Decimal        @db.Decimal(10, 2)
+  tipo            TipoMovimiento
+  fecha           DateTime       @default(now())
+  nota            String?
+  cuentaBaseId    Int
+  cuentaDestinoId Int?
+  cuentaBase      Cuenta         @relation("cuentaBase", fields: [cuentaBaseId], references: [cuentaId])
+  cuentaDestino   Cuenta?        @relation("cuentaDestino", fields: [cuentaDestinoId], references: [cuentaId])
+}
