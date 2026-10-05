@@ -6,11 +6,75 @@ import {
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateCuentaDto } from './dto/create-cuenta.dto.js';
 import { UpdateCuentaDto } from './dto/update-cuenta.dto.js';
-import { Prisma } from '../generated/prisma/client.js';
+import { Prisma, Cuenta } from '../generated/prisma/client.js';
 
 @Injectable()
 export class CuentasService {
   private readonly prisma: PrismaService;
+
+  private async addSaldo(cuenta: Cuenta) {
+    const cuentaId = cuenta.cuentaId;
+
+    const ingresos = this.prisma.movimiento.aggregate({
+      where: { cuentaBaseId: cuentaId, tipo: 'INGRESO' },
+      _sum: {
+        monto: true,
+      },
+    });
+
+    const gastos = this.prisma.movimiento.aggregate({
+      where: { cuentaBaseId: cuentaId, tipo: 'GASTO' },
+      _sum: {
+        monto: true,
+      },
+    });
+
+    const transferenciaSaliente = this.prisma.movimiento.aggregate({
+      where: { cuentaBaseId: cuentaId, tipo: 'TRANSFERENCIA' },
+      _sum: {
+        monto: true,
+      },
+    });
+
+    const transferenciaEntrante = this.prisma.movimiento.aggregate({
+      where: { cuentaDestinoId: cuentaId, tipo: 'TRANSFERENCIA' },
+      _sum: {
+        monto: true,
+      },
+    });
+
+    const [
+      ingresosResultado,
+      gastosResultado,
+      transferenciaSalienteResultado,
+      transferenciaEntranteResultado,
+    ] = await Promise.all([
+      ingresos,
+      gastos,
+      transferenciaSaliente,
+      transferenciaEntrante,
+    ]);
+
+    const totalIngresos = ingresosResultado._sum.monto ?? new Prisma.Decimal(0);
+    const totalGastos = gastosResultado._sum.monto ?? new Prisma.Decimal(0);
+    const totalTransferenciaSaliente =
+      transferenciaSalienteResultado._sum.monto ?? new Prisma.Decimal(0);
+    const totalTransferenciaEntrante =
+      transferenciaEntranteResultado._sum.monto ?? new Prisma.Decimal(0);
+
+    const saldoTotal = new Prisma.Decimal(cuenta.saldoInicial)
+      .plus(totalIngresos)
+      .plus(totalTransferenciaEntrante)
+      .minus(totalTransferenciaSaliente)
+      .minus(totalGastos);
+
+    return { ...cuenta, saldoActual: saldoTotal };
+  }
+
+  async calcularSaldoTotal(cuentaId: number) {
+    const cuenta = await this.getCuentaById(cuentaId);
+    return await this.addSaldo(cuenta);
+  }
 
   constructor(prisma: PrismaService) {
     this.prisma = prisma;
@@ -18,12 +82,14 @@ export class CuentasService {
 
   //Crear cuenta
   async createCuenta(data: CreateCuentaDto) {
-    return this.prisma.cuenta.create({ data });
+    const cuenta = await this.prisma.cuenta.create({ data });
+    return await this.addSaldo(cuenta);
   }
 
   //Obtener todas las cuentas
   async getCuentas() {
-    return this.prisma.cuenta.findMany();
+    const cuentas = await this.prisma.cuenta.findMany();
+    return await Promise.all(cuentas.map((cuenta) => this.addSaldo(cuenta)));
   }
 
   //Obtener cuenta por id
@@ -41,10 +107,11 @@ export class CuentasService {
 
   async updateCuenta(id: number, data: UpdateCuentaDto) {
     try {
-      return await this.prisma.cuenta.update({
+      const cuenta = await this.prisma.cuenta.update({
         where: { cuentaId: id },
         data,
       });
+      return await this.addSaldo(cuenta);
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&

@@ -48,7 +48,7 @@ export class CuentasController {
   @Get(':id')
   async getCuenta(@Param('id', ParseIntPipe) id: number) {
     try {
-      return await this.cuentasService.getCuentaById(id);
+      return await this.cuentasService.calcularSaldoTotal(id);
     } catch (error) {
       console.error('Error al obtener la cuenta:', error);
       throw error;

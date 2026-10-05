@@ -63,8 +63,28 @@ export class MovimientosService {
   }
 
   //Obtener todos los movimientos
-  async getMovimientos() {
-    return this.prisma.movimiento.findMany();
+  async getMovimientos(year?: number, month?: number) {
+    let where: Prisma.MovimientoWhereInput = {};
+
+    if (month != undefined && year === undefined) {
+      throw new BadRequestException('Se tiene que filtrar por mes y año');
+    } else if (month != undefined && (month > 12 || month < 1)) {
+      throw new BadRequestException('Ingresas un mes valido');
+    }
+
+    if (year != undefined) {
+      const startMonth = month !== undefined ? month - 1 : 0;
+      const endMonth = month !== undefined ? month : 0;
+      const endYear = month !== undefined ? year : year + 1;
+      let startDate = Date.UTC(year, startMonth, 1);
+      let endDate = Date.UTC(endYear, endMonth, 1);
+
+      where = { fecha: { gte: new Date(startDate), lt: new Date(endDate) } };
+    }
+    return this.prisma.movimiento.findMany({
+      orderBy: [{ fecha: 'desc' }, { movimientoId: 'desc' }],
+      where,
+    });
   }
 
   //Obtener movimiento por id

@@ -40,5 +40,5 @@ model Movimiento {
   cuentaBaseId    Int
   cuentaDestinoId Int?
   cuentaBase      Cuenta         @relation("cuentaBase", fields: [cuentaBaseId], references: [cuentaId])
-  cuentaDestino   Cuenta?        @relation("cuentaDestino", fields: [cuentaDestinoId], references: [cuentaId])
+  cuentaDestino   Cuenta?        @relation("cuentaDestino", fields: [cuentaDestinoId], references: [cuentaId], onDelete: Restrict )
 }
