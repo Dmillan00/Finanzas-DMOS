@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateCategoriaDto } from './dto/create-categoria.dto.js';
@@ -12,14 +13,29 @@ import { Prisma } from '../generated/prisma/client.js';
 export class CategoriasService {
   private readonly prisma: PrismaService;
 
+  private normalizarNombre(nombre: string) {
+    const limpio = nombre.trim().replace(/\s+/g, ' ');
+
+    if (!limpio) {
+      throw new BadRequestException('El nombre no puede estar vacio');
+    }
+
+    return limpio.charAt(0).toUpperCase() + limpio.slice(1).toLowerCase();
+  }
+
   constructor(prisma: PrismaService) {
     this.prisma = prisma;
   }
 
   async createCategoria(data: CreateCategoriaDto) {
+    const nombreLimpio = this.normalizarNombre(data.nombre);
+
     try {
       return await this.prisma.categoria.create({
-        data,
+        data: {
+          ...data,
+          nombre: nombreLimpio,
+        },
       });
     } catch (error) {
       if (
@@ -50,10 +66,19 @@ export class CategoriasService {
   }
 
   async updateCategoria(id: number, data: UpdateCategoriaDto) {
+    if (data.nombre === null) {
+      throw new BadRequestException('El nombre no puede ser null');
+    }
+
+    const datosFinales: Prisma.CategoriaUpdateInput =
+      data.nombre !== undefined
+        ? { ...data, nombre: this.normalizarNombre(data.nombre) }
+        : data;
+
     try {
       return await this.prisma.categoria.update({
         where: { categoriaId: id },
-        data,
+        data: datosFinales,
       });
     } catch (error) {
       if (

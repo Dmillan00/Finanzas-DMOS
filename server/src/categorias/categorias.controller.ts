@@ -34,9 +34,9 @@ export class CategoriasController {
   //Obtener Categorias
 
   @Get()
-  getCategorias() {
+  async getCategorias() {
     try {
-      return this.categoriasService.getCategorias();
+      return await this.categoriasService.getCategorias();
     } catch (error) {
       console.error('Error al obtener las categorias:', error);
       throw error;
@@ -68,9 +68,9 @@ export class CategoriasController {
   }
 
   @Delete(':id')
-  deleteCategoria(@Param('id', ParseIntPipe) id: number) {
+  async deleteCategoria(@Param('id', ParseIntPipe) id: number) {
     try {
-      return this.categoriasService.deleteCategoria(id);
+      return await this.categoriasService.deleteCategoria(id);
     } catch (error) {
       console.error('Error al borrar la categoria', error);
       throw error;
