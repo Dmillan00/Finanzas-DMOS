@@ -15,6 +15,7 @@ export class MovimientosService {
   private validarReglas(
     tipo: TipoMovimiento,
     base: number,
+    categoria: number | null,
     destino: number | null,
   ) {
     if (tipo === TipoMovimiento.TRANSFERENCIA && destino == null) {
@@ -33,6 +34,18 @@ export class MovimientosService {
         `No se puede actuar sobre el movimiento de tipo TRANSFERENCIA con la misma cuenta base y cuenta destino`,
       );
     }
+
+    if (tipo === TipoMovimiento.TRANSFERENCIA && categoria != null) {
+      throw new BadRequestException(
+        'Las transferencias no pueden tener categoria',
+      );
+    }
+
+    if (tipo != TipoMovimiento.TRANSFERENCIA && categoria == null) {
+      throw new BadRequestException(
+        'La categoria es obligatoria para los tipos, excepto transferencia',
+      );
+    }
   }
 
   constructor(prisma: PrismaService) {
@@ -45,17 +58,21 @@ export class MovimientosService {
     this.validarReglas(
       data.tipo,
       data.cuentaBaseId,
+      data.categoriaId ?? null,
       data.cuentaDestinoId ?? null,
     );
     try {
-      return await this.prisma.movimiento.create({ data });
+      return await this.prisma.movimiento.create({
+        data,
+        include: { categoria: true },
+      });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2003'
       ) {
         throw new BadRequestException(
-          `No se puede crear el movimiento porque la cuenta base o la cuenta destino no existe`,
+          `No se puede crear el movimiento porque la cuenta base, categoria o la cuenta destino no existe`,
         );
       }
       throw error;
@@ -84,6 +101,7 @@ export class MovimientosService {
     return this.prisma.movimiento.findMany({
       orderBy: [{ fecha: 'desc' }, { movimientoId: 'desc' }],
       where,
+      include: { categoria: true },
     });
   }
 
@@ -91,6 +109,7 @@ export class MovimientosService {
   async getMovimientoById(id: number) {
     const movimiento = await this.prisma.movimiento.findUnique({
       where: { movimientoId: id },
+      include: { categoria: true },
     });
 
     if (!movimiento) {
@@ -114,6 +133,11 @@ export class MovimientosService {
       );
     }
 
+    const categoria =
+      data.categoriaId !== undefined
+        ? data.categoriaId
+        : movimientoExistente.categoriaId;
+
     const destino =
       data.cuentaDestinoId !== undefined
         ? data.cuentaDestinoId
@@ -125,12 +149,13 @@ export class MovimientosService {
         `No se puede cambiar el tipo de movimiento de ${movimientoExistente.tipo} a ${data.tipo}`,
       );
     }
-    this.validarReglas(movimientoExistente.tipo, base, destino);
+    this.validarReglas(movimientoExistente.tipo, base, categoria, destino);
 
     try {
       return await this.prisma.movimiento.update({
         where: { movimientoId: id },
         data,
+        include: { categoria: true },
       });
     } catch (error) {
       if (
@@ -146,7 +171,7 @@ export class MovimientosService {
         error.code === 'P2003'
       ) {
         throw new BadRequestException(
-          `No se puede actualizar el movimiento porque la cuenta base o la cuenta destino no existe`,
+          `No se puede actualizar el movimiento porque la cuenta base, categoria o la cuenta destino no existe`,
         );
       }
       throw error;

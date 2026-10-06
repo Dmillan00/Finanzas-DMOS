@@ -40,5 +40,9 @@ export class CreateMovimientoDto {
 
   @IsInt()
   @IsOptional()
+  categoriaId?: number;
+
+  @IsInt()
+  @IsOptional()
   cuentaDestinoId?: number;
 }

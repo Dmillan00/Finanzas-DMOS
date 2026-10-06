@@ -22,6 +22,14 @@ model Cuenta {
   cuentaDestino Movimiento[] @relation("cuentaDestino")
 }
 
+// Modelo de categoria
+
+model Categoria {
+  categoriaId Int          @id @default(autoincrement())
+  nombre      String       @unique
+  movimientos Movimiento[] @relation("categoria")
+}
+
 enum TipoMovimiento {
   INGRESO
   GASTO
@@ -39,6 +47,8 @@ model Movimiento {
   nota            String?
   cuentaBaseId    Int
   cuentaDestinoId Int?
+  categoriaId     Int?
+  categoria       Categoria?     @relation("categoria", fields: [categoriaId], references: [categoriaId], onDelete: Restrict)
   cuentaBase      Cuenta         @relation("cuentaBase", fields: [cuentaBaseId], references: [cuentaId])
-  cuentaDestino   Cuenta?        @relation("cuentaDestino", fields: [cuentaDestinoId], references: [cuentaId], onDelete: Restrict )
+  cuentaDestino   Cuenta?        @relation("cuentaDestino", fields: [cuentaDestinoId], references: [cuentaId], onDelete: Restrict)
 }
