@@ -5,7 +5,17 @@ import { CategoriasService } from './categorias.service.js';
 describe('CategoriasController', () => {
   let controller: CategoriasController;
 
+  const serviceMock = {
+    createCategoria: vi.fn(),
+    getCategorias: vi.fn(),
+    getCategoria: vi.fn(),
+    updateCategoria: vi.fn(),
+    deleteCategoria: vi.fn(),
+  };
+
   beforeEach(async () => {
+    vi.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CategoriasController],
       providers: [

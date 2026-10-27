@@ -42,11 +42,13 @@ describe('MovimientosService', () => {
 
   describe('createMovimiento', () => {
     it('crea un INGRESO con categoría y sin cuenta destino', async () => {
+    it('crea un INGRESO con categoría y sin cuenta destino', async () => {
       const dto = {
         nombre: 'Nómina',
         monto: 1500,
         tipo: TipoMovimiento.INGRESO,
         cuentaBaseId: 1,
+        categoriaId: 1,
         categoriaId: 1,
       };
       const creado = { movimientoId: 1, ...dto };
@@ -57,6 +59,7 @@ describe('MovimientosService', () => {
       expect(resultado).toEqual(creado);
       expect(prismaServiceMock.movimiento.create).toHaveBeenCalledWith({
         data: dto,
+        include: { categoria: true },
         include: { categoria: true },
       });
     });
@@ -128,6 +131,7 @@ describe('MovimientosService', () => {
         monto: 100,
         tipo: TipoMovimiento.GASTO,
         cuentaBaseId: 1,
+        categoriaId: 1,
         cuentaDestinoId: 2,
         categoriaId: 1,
       };
@@ -135,6 +139,7 @@ describe('MovimientosService', () => {
       await expect(service.createMovimiento(dto)).rejects.toThrow(
         BadRequestException,
       );
+      expect(prismaServiceMock.movimiento.create).not.toHaveBeenCalled();
     });
 
     it('lanza BadRequestException si cuentaBase === cuentaDestino', async () => {
@@ -207,6 +212,12 @@ describe('MovimientosService', () => {
       );
     });
 
+    it('lanza BadRequestException si month es inválido (0)', async () => {
+      await expect(service.getMovimientos(2026, 0)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
     it('filtra por year y month cuando son válidos', async () => {
       prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
 
@@ -261,6 +272,14 @@ describe('MovimientosService', () => {
       categoriaId: 1,
     };
 
+    const existenteGasto = {
+      movimientoId: 1,
+      tipo: TipoMovimiento.GASTO,
+      cuentaBaseId: 1,
+      cuentaDestinoId: null,
+      categoriaId: 1,
+    };
+
     it('lanza NotFoundException si no existe', async () => {
       prismaServiceMock.movimiento.findUnique.mockResolvedValue(null);
 
@@ -273,7 +292,7 @@ describe('MovimientosService', () => {
       prismaServiceMock.movimiento.findUnique.mockResolvedValue(existenteGasto);
 
       await expect(
-        service.updateMovimiento(1, { tipo: TipoMovimiento.INGRESO }),
+        service.updateMovimiento(2, { categoriaId: 1 }),
       ).rejects.toThrow(BadRequestException);
     });
 
