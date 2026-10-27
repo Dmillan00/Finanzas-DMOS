@@ -10,6 +10,7 @@ describe('Movimientos (e2e)', () => {
   let prisma: PrismaService;
   let cuentaBaseId: number;
   let cuentaDestinoId: number;
+  let categoriaId: number;
   let movimientoCreadoId: number;
 
   beforeAll(async () => {
@@ -28,8 +29,14 @@ describe('Movimientos (e2e)', () => {
     const cuentaDestino = await prisma.cuenta.create({
       data: { nombre: 'Cuenta destino E2E', saldoInicial: 0 },
     });
+    const categoria = await prisma.categoria.upsert({
+      where: { nombre: 'Categoria E2E' },
+      update: {},
+      create: { nombre: 'Categoria E2E' },
+    });
     cuentaBaseId = cuentaBase.cuentaId;
     cuentaDestinoId = cuentaDestino.cuentaId;
+    categoriaId = categoria.categoriaId;
   });
 
   afterAll(async () => {
@@ -39,10 +46,11 @@ describe('Movimientos (e2e)', () => {
     await prisma.cuenta.deleteMany({
       where: { cuentaId: { in: [cuentaBaseId, cuentaDestinoId] } },
     });
+    await prisma.categoria.deleteMany({ where: { categoriaId } });
     await app.close();
   });
 
-  it('POST /movimientos crea un GASTO', async () => {
+  it('POST /movimientos crea un GASTO con categoría', async () => {
     const res = await request(app.getHttpServer())
       .post('/movimientos')
       .send({
@@ -50,11 +58,54 @@ describe('Movimientos (e2e)', () => {
         monto: 50,
         tipo: 'GASTO',
         cuentaBaseId,
+        categoriaId,
       })
       .expect(201);
 
     expect(res.body.tipo).toBe('GASTO');
+    expect(res.body.categoria.categoriaId).toBe(categoriaId);
     movimientoCreadoId = res.body.movimientoId;
+  });
+
+  it('POST /movimientos crea una TRANSFERENCIA sin categoría', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/movimientos')
+      .send({
+        nombre: 'Transfer E2E',
+        monto: 10,
+        tipo: 'TRANSFERENCIA',
+        cuentaBaseId,
+        cuentaDestinoId,
+      })
+      .expect(201);
+
+    expect(res.body.categoria).toBeNull();
+  });
+
+  it('POST /movimientos falla con 400 si GASTO sin categoría', async () => {
+    await request(app.getHttpServer())
+      .post('/movimientos')
+      .send({
+        nombre: 'Gasto sin categoría',
+        monto: 10,
+        tipo: 'GASTO',
+        cuentaBaseId,
+      })
+      .expect(400);
+  });
+
+  it('POST /movimientos falla con 400 si TRANSFERENCIA lleva categoría', async () => {
+    await request(app.getHttpServer())
+      .post('/movimientos')
+      .send({
+        nombre: 'Transfer con categoría',
+        monto: 10,
+        tipo: 'TRANSFERENCIA',
+        cuentaBaseId,
+        cuentaDestinoId,
+        categoriaId,
+      })
+      .expect(400);
   });
 
   it('POST /movimientos falla con 400 si TRANSFERENCIA sin cuentaDestinoId', async () => {
@@ -77,6 +128,7 @@ describe('Movimientos (e2e)', () => {
         monto: 10,
         tipo: 'GASTO',
         cuentaBaseId: 999999,
+        categoriaId,
       })
       .expect(400);
   });

@@ -17,6 +17,12 @@ describe('MovimientosService', () => {
     },
   };
 
+  const errorPrisma = (code: string) =>
+    new Prisma.PrismaClientKnownRequestError('error', {
+      code,
+      clientVersion: '7.0.0',
+    });
+
   beforeEach(async () => {
     vi.clearAllMocks();
 
@@ -35,15 +41,15 @@ describe('MovimientosService', () => {
   });
 
   describe('createMovimiento', () => {
-    it('crea un INGRESO sin cuenta destino', async () => {
+    it('crea un INGRESO con categoría y sin cuenta destino', async () => {
       const dto = {
         nombre: 'Nómina',
         monto: 1500,
         tipo: TipoMovimiento.INGRESO,
         cuentaBaseId: 1,
+        categoriaId: 1,
       };
       const creado = { movimientoId: 1, ...dto };
-
       prismaServiceMock.movimiento.create.mockResolvedValue(creado);
 
       const resultado = await service.createMovimiento(dto);
@@ -51,7 +57,55 @@ describe('MovimientosService', () => {
       expect(resultado).toEqual(creado);
       expect(prismaServiceMock.movimiento.create).toHaveBeenCalledWith({
         data: dto,
+        include: { categoria: true },
       });
+    });
+
+    it('crea una TRANSFERENCIA con destino y sin categoría', async () => {
+      const dto = {
+        nombre: 'Hucha',
+        monto: 50,
+        tipo: TipoMovimiento.TRANSFERENCIA,
+        cuentaBaseId: 1,
+        cuentaDestinoId: 2,
+      };
+      prismaServiceMock.movimiento.create.mockResolvedValue({
+        movimientoId: 1,
+        ...dto,
+      });
+
+      await service.createMovimiento(dto);
+
+      expect(prismaServiceMock.movimiento.create).toHaveBeenCalled();
+    });
+
+    it('lanza BadRequestException si INGRESO/GASTO no tiene categoría', async () => {
+      const dto = {
+        nombre: 'Compra',
+        monto: 10,
+        tipo: TipoMovimiento.GASTO,
+        cuentaBaseId: 1,
+      };
+
+      await expect(service.createMovimiento(dto)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prismaServiceMock.movimiento.create).not.toHaveBeenCalled();
+    });
+
+    it('lanza BadRequestException si TRANSFERENCIA tiene categoría', async () => {
+      const dto = {
+        nombre: 'Transfer',
+        monto: 100,
+        tipo: TipoMovimiento.TRANSFERENCIA,
+        cuentaBaseId: 1,
+        cuentaDestinoId: 2,
+        categoriaId: 1,
+      };
+
+      await expect(service.createMovimiento(dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('lanza BadRequestException si TRANSFERENCIA no tiene cuentaDestinoId', async () => {
@@ -75,6 +129,7 @@ describe('MovimientosService', () => {
         tipo: TipoMovimiento.GASTO,
         cuentaBaseId: 1,
         cuentaDestinoId: 2,
+        categoriaId: 1,
       };
 
       await expect(service.createMovimiento(dto)).rejects.toThrow(
@@ -96,18 +151,17 @@ describe('MovimientosService', () => {
       );
     });
 
-    it('lanza BadRequestException si la cuenta no existe (P2003)', async () => {
+    it('lanza BadRequestException si la cuenta o categoría no existe (P2003)', async () => {
       const dto = {
         nombre: 'Gasto',
         monto: 100,
         tipo: TipoMovimiento.GASTO,
         cuentaBaseId: 999,
+        categoriaId: 1,
       };
-      const errorP2003 = new Prisma.PrismaClientKnownRequestError('FK', {
-        code: 'P2003',
-        clientVersion: '7.0.0',
-      });
-      prismaServiceMock.movimiento.create.mockRejectedValue(errorP2003);
+      prismaServiceMock.movimiento.create.mockRejectedValue(
+        errorPrisma('P2003'),
+      );
 
       await expect(service.createMovimiento(dto)).rejects.toThrow(
         BadRequestException,
@@ -147,6 +201,12 @@ describe('MovimientosService', () => {
       );
     });
 
+    it('lanza BadRequestException si month es inválido (0)', async () => {
+      await expect(service.getMovimientos(2026, 0)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
     it('filtra por year y month cuando son válidos', async () => {
       prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
 
@@ -163,9 +223,44 @@ describe('MovimientosService', () => {
         }),
       );
     });
+
+    it('filtra todo el año si solo hay year', async () => {
+      prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
+
+      await service.getMovimientos(2026);
+
+      expect(prismaServiceMock.movimiento.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            fecha: {
+              gte: new Date(Date.UTC(2026, 0, 1)),
+              lt: new Date(Date.UTC(2027, 0, 1)),
+            },
+          },
+        }),
+      );
+    });
+
+    it('sin filtros usa where vacío', async () => {
+      prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
+
+      await service.getMovimientos();
+
+      expect(prismaServiceMock.movimiento.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} }),
+      );
+    });
   });
 
   describe('updateMovimiento', () => {
+    const existenteGasto = {
+      movimientoId: 1,
+      tipo: TipoMovimiento.GASTO,
+      cuentaBaseId: 1,
+      cuentaDestinoId: null,
+      categoriaId: 1,
+    };
+
     it('lanza NotFoundException si no existe', async () => {
       prismaServiceMock.movimiento.findUnique.mockResolvedValue(null);
 
@@ -175,28 +270,38 @@ describe('MovimientosService', () => {
     });
 
     it('lanza BadRequestException si intenta cambiar el tipo', async () => {
-      prismaServiceMock.movimiento.findUnique.mockResolvedValue({
-        movimientoId: 1,
-        tipo: TipoMovimiento.GASTO,
-        cuentaBaseId: 1,
-        cuentaDestinoId: null,
-      });
+      prismaServiceMock.movimiento.findUnique.mockResolvedValue(existenteGasto);
 
       await expect(
         service.updateMovimiento(1, { tipo: TipoMovimiento.INGRESO }),
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('actualiza correctamente si los datos son válidos', async () => {
-      const existente = {
-        movimientoId: 1,
-        tipo: TipoMovimiento.GASTO,
-        cuentaBaseId: 1,
-        cuentaDestinoId: null,
-      };
-      const actualizado = { ...existente, nombre: 'Nuevo nombre' };
+    it('lanza BadRequestException si un GASTO recibe cuentaDestinoId', async () => {
+      prismaServiceMock.movimiento.findUnique.mockResolvedValue(existenteGasto);
 
-      prismaServiceMock.movimiento.findUnique.mockResolvedValue(existente);
+      await expect(
+        service.updateMovimiento(1, { cuentaDestinoId: 2 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('lanza BadRequestException si una TRANSFERENCIA recibe categoriaId', async () => {
+      prismaServiceMock.movimiento.findUnique.mockResolvedValue({
+        movimientoId: 2,
+        tipo: TipoMovimiento.TRANSFERENCIA,
+        cuentaBaseId: 1,
+        cuentaDestinoId: 2,
+        categoriaId: null,
+      });
+
+      await expect(
+        service.updateMovimiento(2, { categoriaId: 1 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('actualiza correctamente si los datos son válidos', async () => {
+      const actualizado = { ...existenteGasto, nombre: 'Nuevo nombre' };
+      prismaServiceMock.movimiento.findUnique.mockResolvedValue(existenteGasto);
       prismaServiceMock.movimiento.update.mockResolvedValue(actualizado);
 
       const resultado = await service.updateMovimiento(1, {
@@ -204,6 +309,28 @@ describe('MovimientosService', () => {
       });
 
       expect(resultado).toEqual(actualizado);
+    });
+
+    it('lanza NotFoundException si update falla con P2025', async () => {
+      prismaServiceMock.movimiento.findUnique.mockResolvedValue(existenteGasto);
+      prismaServiceMock.movimiento.update.mockRejectedValue(
+        errorPrisma('P2025'),
+      );
+
+      await expect(
+        service.updateMovimiento(1, { nombre: 'x' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('lanza BadRequestException si update falla con P2003', async () => {
+      prismaServiceMock.movimiento.findUnique.mockResolvedValue(existenteGasto);
+      prismaServiceMock.movimiento.update.mockRejectedValue(
+        errorPrisma('P2003'),
+      );
+
+      await expect(
+        service.updateMovimiento(1, { categoriaId: 999 }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -218,11 +345,9 @@ describe('MovimientosService', () => {
     });
 
     it('lanza NotFoundException si no existe (P2025)', async () => {
-      const errorP2025 = new Prisma.PrismaClientKnownRequestError('No existe', {
-        code: 'P2025',
-        clientVersion: '7.0.0',
-      });
-      prismaServiceMock.movimiento.delete.mockRejectedValue(errorP2025);
+      prismaServiceMock.movimiento.delete.mockRejectedValue(
+        errorPrisma('P2025'),
+      );
 
       await expect(service.deleteMovimiento(99)).rejects.toThrow(
         NotFoundException,
