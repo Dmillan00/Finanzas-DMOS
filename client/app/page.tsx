@@ -5,12 +5,15 @@ type Cuenta = {
 };
 
 export default async function Home() {
-  const response = await fetch(process.env.NEXT_PUBLIC_API_URL + '/cuentas');
-  if (!response.ok) {
+  const responseAccount = await fetch(
+    process.env.NEXT_PUBLIC_API_URL + '/cuentas',
+  );
+
+  if (!responseAccount.ok) {
     throw new Error('Error al obtener las cuentas');
   }
 
-  const cuentas: Cuenta[] = await response.json();
+  const cuentas: Cuenta[] = await responseAccount.json();
 
   return (
     <main>
