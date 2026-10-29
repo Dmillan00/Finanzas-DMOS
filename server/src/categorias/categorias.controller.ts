@@ -7,10 +7,13 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  Query,
+  ParseEnumPipe,
 } from '@nestjs/common';
 import { CategoriasService } from './categorias.service.js';
 import { CreateCategoriaDto } from './dto/create-categoria.dto.js';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto.js';
+import { TipoMovimientoCategoria } from '../generated/prisma/enums.js';
 
 @Controller('categorias')
 export class CategoriasController {
@@ -34,9 +37,15 @@ export class CategoriasController {
   //Obtener Categorias
 
   @Get()
-  async getCategorias() {
+  async getCategorias(
+    @Query(
+      'tipo',
+      new ParseEnumPipe(TipoMovimientoCategoria, { optional: true }),
+    )
+    tipo?: TipoMovimientoCategoria,
+  ) {
     try {
-      return await this.categoriasService.getCategorias();
+      return await this.categoriasService.getCategorias(tipo);
     } catch (error) {
       console.error('Error al obtener las categorias:', error);
       throw error;

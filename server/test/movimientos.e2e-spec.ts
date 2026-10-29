@@ -11,6 +11,7 @@ describe('Movimientos (e2e)', () => {
   let cuentaBaseId: number;
   let cuentaDestinoId: number;
   let categoriaId: number;
+  let categoriaIngresoId: number;
   let movimientoCreadoId: number;
 
   beforeAll(async () => {
@@ -29,22 +30,20 @@ describe('Movimientos (e2e)', () => {
     const cuentaDestino = await prisma.cuenta.create({
       data: { nombre: 'Cuenta destino E2E', saldoInicial: 0 },
     });
-<<<<<<< HEAD
     const categoria = await prisma.categoria.upsert({
-      where: { nombre: 'Categoria E2E' },
+      where: { nombre_tipo: { nombre: 'Categoria E2E', tipo: 'GASTO' } },
       update: {},
-      create: { nombre: 'Categoria E2E' },
-=======
-    // upsert: si una ejecución anterior falló y dejó la categoría, no rompe por el unique
-    const categoria = await prisma.categoria.upsert({
-      where: { nombre: 'Categoria Mov E2E' },
+      create: { nombre: 'Categoria E2E', tipo: 'GASTO' },
+    });
+    const categoriaIngreso = await prisma.categoria.upsert({
+      where: { nombre_tipo: { nombre: 'Categoria E2E', tipo: 'INGRESO' } },
       update: {},
-      create: { nombre: 'Categoria Mov E2E' },
->>>>>>> 17f9c1aaed46eb5ce7d53c1426c9d4e24db587c1
+      create: { nombre: 'Categoria E2E', tipo: 'INGRESO' },
     });
     cuentaBaseId = cuentaBase.cuentaId;
     cuentaDestinoId = cuentaDestino.cuentaId;
     categoriaId = categoria.categoriaId;
+    categoriaIngresoId = categoriaIngreso.categoriaId;
   });
 
   afterAll(async () => {
@@ -55,7 +54,9 @@ describe('Movimientos (e2e)', () => {
     await prisma.cuenta.deleteMany({
       where: { cuentaId: { in: [cuentaBaseId, cuentaDestinoId] } },
     });
-    await prisma.categoria.deleteMany({ where: { categoriaId } });
+    await prisma.categoria.deleteMany({
+      where: { categoriaId: { in: [categoriaId, categoriaIngresoId] } },
+    });
     await app.close();
   });
 
@@ -129,6 +130,32 @@ describe('Movimientos (e2e)', () => {
       .expect(400);
   });
 
+  it('POST /movimientos falla con 400 si el tipo no coincide con el de la categoría', async () => {
+    await request(app.getHttpServer())
+      .post('/movimientos')
+      .send({
+        nombre: 'Gasto con categoría de ingreso',
+        monto: 10,
+        tipo: 'GASTO',
+        cuentaBaseId,
+        categoriaId: categoriaIngresoId,
+      })
+      .expect(400);
+  });
+
+  it('POST /movimientos falla con 400 si la categoría no existe', async () => {
+    await request(app.getHttpServer())
+      .post('/movimientos')
+      .send({
+        nombre: 'Gasto categoría inexistente',
+        monto: 10,
+        tipo: 'GASTO',
+        cuentaBaseId,
+        categoriaId: 999999,
+      })
+      .expect(400);
+  });
+
   it('POST /movimientos falla con 400 si cuentaBaseId no existe', async () => {
     await request(app.getHttpServer())
       .post('/movimientos')
@@ -138,22 +165,6 @@ describe('Movimientos (e2e)', () => {
         tipo: 'GASTO',
         cuentaBaseId: 999999,
         categoriaId,
-<<<<<<< HEAD
-=======
-      })
-      .expect(400);
-  });
-
-  it('POST /movimientos falla con 400 si categoriaId no existe', async () => {
-    await request(app.getHttpServer())
-      .post('/movimientos')
-      .send({
-        nombre: 'Gasto categoría inexistente',
-        monto: 10,
-        tipo: 'GASTO',
-        cuentaBaseId,
-        categoriaId: 999999,
->>>>>>> 17f9c1aaed46eb5ce7d53c1426c9d4e24db587c1
       })
       .expect(400);
   });

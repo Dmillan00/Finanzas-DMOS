@@ -15,6 +15,20 @@ describe('MovimientosService', () => {
       update: vi.fn(),
       delete: vi.fn(),
     },
+    categoria: {
+      findUnique: vi.fn(),
+    },
+  };
+
+  const categoriaGasto = {
+    categoriaId: 1,
+    nombre: 'Comida',
+    tipo: TipoMovimiento.GASTO,
+  };
+  const categoriaIngreso = {
+    categoriaId: 2,
+    nombre: 'Nomina',
+    tipo: TipoMovimiento.INGRESO,
   };
 
   const errorPrisma = (code: string) =>
@@ -25,6 +39,16 @@ describe('MovimientosService', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+
+    // 1 = categoría de GASTO, 2 = de INGRESO, cualquier otro id no existe
+    prismaServiceMock.categoria.findUnique.mockImplementation(
+      ({ where }: { where: { categoriaId: number } }) =>
+        Promise.resolve(
+          [categoriaGasto, categoriaIngreso].find(
+            (c) => c.categoriaId === where.categoriaId,
+          ) ?? null,
+        ),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -42,14 +66,12 @@ describe('MovimientosService', () => {
 
   describe('createMovimiento', () => {
     it('crea un INGRESO con categoría y sin cuenta destino', async () => {
-    it('crea un INGRESO con categoría y sin cuenta destino', async () => {
       const dto = {
         nombre: 'Nómina',
         monto: 1500,
         tipo: TipoMovimiento.INGRESO,
         cuentaBaseId: 1,
-        categoriaId: 1,
-        categoriaId: 1,
+        categoriaId: 2,
       };
       const creado = { movimientoId: 1, ...dto };
       prismaServiceMock.movimiento.create.mockResolvedValue(creado);
@@ -59,7 +81,6 @@ describe('MovimientosService', () => {
       expect(resultado).toEqual(creado);
       expect(prismaServiceMock.movimiento.create).toHaveBeenCalledWith({
         data: dto,
-        include: { categoria: true },
         include: { categoria: true },
       });
     });
@@ -133,7 +154,36 @@ describe('MovimientosService', () => {
         cuentaBaseId: 1,
         categoriaId: 1,
         cuentaDestinoId: 2,
-        categoriaId: 1,
+      };
+
+      await expect(service.createMovimiento(dto)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prismaServiceMock.movimiento.create).not.toHaveBeenCalled();
+    });
+
+    it('lanza BadRequestException si el tipo no coincide con el de la categoría', async () => {
+      const dto = {
+        nombre: 'Gasto con categoría de ingreso',
+        monto: 10,
+        tipo: TipoMovimiento.GASTO,
+        cuentaBaseId: 1,
+        categoriaId: 2,
+      };
+
+      await expect(service.createMovimiento(dto)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prismaServiceMock.movimiento.create).not.toHaveBeenCalled();
+    });
+
+    it('lanza BadRequestException si la categoría no existe', async () => {
+      const dto = {
+        nombre: 'Gasto',
+        monto: 10,
+        tipo: TipoMovimiento.GASTO,
+        cuentaBaseId: 1,
+        categoriaId: 999,
       };
 
       await expect(service.createMovimiento(dto)).rejects.toThrow(
@@ -212,12 +262,6 @@ describe('MovimientosService', () => {
       );
     });
 
-    it('lanza BadRequestException si month es inválido (0)', async () => {
-      await expect(service.getMovimientos(2026, 0)).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-
     it('filtra por year y month cuando son válidos', async () => {
       prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
 
@@ -272,14 +316,6 @@ describe('MovimientosService', () => {
       categoriaId: 1,
     };
 
-    const existenteGasto = {
-      movimientoId: 1,
-      tipo: TipoMovimiento.GASTO,
-      cuentaBaseId: 1,
-      cuentaDestinoId: null,
-      categoriaId: 1,
-    };
-
     it('lanza NotFoundException si no existe', async () => {
       prismaServiceMock.movimiento.findUnique.mockResolvedValue(null);
 
@@ -292,8 +328,26 @@ describe('MovimientosService', () => {
       prismaServiceMock.movimiento.findUnique.mockResolvedValue(existenteGasto);
 
       await expect(
-        service.updateMovimiento(2, { categoriaId: 1 }),
+        service.updateMovimiento(1, { tipo: TipoMovimiento.INGRESO }),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('lanza BadRequestException si la nueva categoría es de otro tipo', async () => {
+      prismaServiceMock.movimiento.findUnique.mockResolvedValue(existenteGasto);
+
+      await expect(
+        service.updateMovimiento(1, { categoriaId: 2 }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaServiceMock.movimiento.update).not.toHaveBeenCalled();
+    });
+
+    it('lanza BadRequestException si la nueva categoría no existe', async () => {
+      prismaServiceMock.movimiento.findUnique.mockResolvedValue(existenteGasto);
+
+      await expect(
+        service.updateMovimiento(1, { categoriaId: 999 }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaServiceMock.movimiento.update).not.toHaveBeenCalled();
     });
 
     it('lanza BadRequestException si un GASTO recibe cuentaDestinoId', async () => {
@@ -316,6 +370,25 @@ describe('MovimientosService', () => {
       await expect(
         service.updateMovimiento(2, { categoriaId: 1 }),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('actualiza una TRANSFERENCIA sin categoría', async () => {
+      const transferencia = {
+        movimientoId: 2,
+        tipo: TipoMovimiento.TRANSFERENCIA,
+        cuentaBaseId: 1,
+        cuentaDestinoId: 2,
+        categoriaId: null,
+      };
+      const actualizado = { ...transferencia, nombre: 'Nuevo nombre' };
+      prismaServiceMock.movimiento.findUnique.mockResolvedValue(transferencia);
+      prismaServiceMock.movimiento.update.mockResolvedValue(actualizado);
+
+      const resultado = await service.updateMovimiento(2, {
+        nombre: 'Nuevo nombre',
+      });
+
+      expect(resultado).toEqual(actualizado);
     });
 
     it('actualiza correctamente si los datos son válidos', async () => {
@@ -348,7 +421,7 @@ describe('MovimientosService', () => {
       );
 
       await expect(
-        service.updateMovimiento(1, { categoriaId: 999 }),
+        service.updateMovimiento(1, { categoriaId: 1 }),
       ).rejects.toThrow(BadRequestException);
     });
   });

@@ -6,7 +6,11 @@ import {
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateMovimientoDto } from './dto/create-movimiento.dto.js';
 import { UpdateMovimientoDto } from './dto/update-movimiento.dto.js';
-import { Prisma, TipoMovimiento } from '../generated/prisma/client.js';
+import {
+  Categoria,
+  Prisma,
+  TipoMovimiento,
+} from '../generated/prisma/client.js';
 
 @Injectable()
 export class MovimientosService {
@@ -15,7 +19,7 @@ export class MovimientosService {
   private validarReglas(
     tipo: TipoMovimiento,
     base: number,
-    categoria: number | null,
+    categoria: Categoria | null,
     destino: number | null,
   ) {
     if (tipo === TipoMovimiento.TRANSFERENCIA && destino == null) {
@@ -41,10 +45,17 @@ export class MovimientosService {
       );
     }
 
-    if (tipo != TipoMovimiento.TRANSFERENCIA && categoria == null) {
-      throw new BadRequestException(
-        'La categoria es obligatoria para los tipos, excepto transferencia',
-      );
+    if (tipo !== TipoMovimiento.TRANSFERENCIA) {
+      if (categoria == null) {
+        throw new BadRequestException(
+          'La categoria es obligatoria para los tipos, excepto transferencia',
+        );
+      }
+      if (categoria.tipo !== tipo) {
+        throw new BadRequestException(
+          'El tipo del movimiento debe coincidir con el tipo de la categoria',
+        );
+      }
     }
   }
 
@@ -55,10 +66,23 @@ export class MovimientosService {
   //Crear Movimiento
 
   async createMovimiento(data: CreateMovimientoDto) {
+    let categoria: Categoria | null = null;
+
+    if (data.categoriaId != null) {
+      categoria = await this.prisma.categoria.findUnique({
+        where: { categoriaId: data.categoriaId },
+      });
+      if (!categoria) {
+        throw new BadRequestException(
+          `La categoria con ID ${data.categoriaId} no existe`,
+        );
+      }
+    }
+
     this.validarReglas(
       data.tipo,
       data.cuentaBaseId,
-      data.categoriaId ?? null,
+      categoria,
       data.cuentaDestinoId ?? null,
     );
     try {
@@ -133,7 +157,7 @@ export class MovimientosService {
       );
     }
 
-    const categoria =
+    const categoriaId =
       data.categoriaId !== undefined
         ? data.categoriaId
         : movimientoExistente.categoriaId;
@@ -143,7 +167,22 @@ export class MovimientosService {
         ? data.cuentaDestinoId
         : movimientoExistente.cuentaDestinoId;
 
+    let categoria: Categoria | null = null;
+
+    if (categoriaId != null) {
+      categoria = await this.prisma.categoria.findUnique({
+        where: { categoriaId },
+      });
+
+      if (!categoria) {
+        throw new BadRequestException(
+          `La categoria con ID ${categoriaId} no existe`,
+        );
+      }
+    }
+
     const base = data.cuentaBaseId ?? movimientoExistente.cuentaBaseId;
+
     if (data.tipo != undefined && data.tipo !== movimientoExistente.tipo) {
       throw new BadRequestException(
         `No se puede cambiar el tipo de movimiento de ${movimientoExistente.tipo} a ${data.tipo}`,

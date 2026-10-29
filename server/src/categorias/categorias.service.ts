@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateCategoriaDto } from './dto/create-categoria.dto.js';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto.js';
-import { Prisma } from '../generated/prisma/client.js';
+import { Prisma, TipoMovimientoCategoria } from '../generated/prisma/client.js';
 
 @Injectable()
 export class CategoriasService {
@@ -50,8 +50,15 @@ export class CategoriasService {
     }
   }
 
-  async getCategorias() {
-    return await this.prisma.categoria.findMany();
+  async getCategorias(tipo?: TipoMovimientoCategoria) {
+    return await this.prisma.categoria.findMany({
+      where: {
+        tipo: tipo,
+      },
+      orderBy: {
+        nombre: 'asc',
+      },
+    });
   }
 
   async getCategoria(id: number) {

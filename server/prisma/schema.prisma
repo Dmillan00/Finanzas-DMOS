@@ -24,10 +24,18 @@ model Cuenta {
 
 // Modelo de categoria
 
+enum TipoMovimientoCategoria {
+  INGRESO
+  GASTO
+}
+
 model Categoria {
-  categoriaId Int          @id @default(autoincrement())
-  nombre      String       @unique
-  movimientos Movimiento[] @relation("categoria")
+  categoriaId Int                     @id @default(autoincrement())
+  nombre      String
+  tipo        TipoMovimientoCategoria
+  movimientos Movimiento[]            @relation("categoria")
+
+  @@unique([nombre, tipo])
 }
 
 enum TipoMovimiento {
