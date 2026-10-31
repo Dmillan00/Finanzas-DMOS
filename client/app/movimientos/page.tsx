@@ -2,6 +2,7 @@ import MovimientoForm from './movimientoForm';
 
 import type { Cuenta, Categoria, Movimiento } from '@/components/props';
 import EditarMovimiento from './editarMovimiento';
+import EliminarMovimiento from './eliminarMovimiento';
 
 const MESES = [
   'Enero',
@@ -92,7 +93,7 @@ export default async function Movimientos({
                 categorias={categorias}
                 movimiento={movimiento}
               />
-
+              <EliminarMovimiento movimiento={movimiento} />
               <p>
                 {new Intl.DateTimeFormat('es-Es', {
                   timeZone: 'Europe/Madrid',

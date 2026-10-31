@@ -2,6 +2,7 @@ export type Cuenta = {
   cuentaId: number;
   nombre: string;
   saldoInicial: string;
+  saldoActual: string;
 };
 
 export type Categoria = {

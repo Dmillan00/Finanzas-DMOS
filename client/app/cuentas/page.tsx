@@ -1,10 +1,5 @@
 import CuentaForm from './cuentaForm';
-
-type Cuenta = {
-  cuentaId: number;
-  nombre: string;
-  saldoInicial: string;
-};
+import type { Cuenta } from '@/components/props';
 
 export default async function Cuentas() {
   const responseAccount = await fetch(
@@ -25,7 +20,12 @@ export default async function Cuentas() {
         {cuentas.map((cuenta) => (
           <li key={cuenta.cuentaId}>
             <p>{cuenta.nombre}</p>
-            <p>{cuenta.saldoInicial}</p>
+            <p>
+              {new Intl.NumberFormat('es-Es', {
+                style: 'currency',
+                currency: 'EUR',
+              }).format(Number(cuenta.saldoActual))}
+            </p>
           </li>
         ))}
       </ul>

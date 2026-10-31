@@ -112,6 +112,8 @@ export async function crearMovimiento(
     return { ok: false, message };
   } else {
     revalidatePath('/movimientos');
+    revalidatePath('/cuentas');
+    revalidatePath('/');
     return { ok: true, message: 'Movimiento creado con exito!' };
   }
 }
@@ -207,6 +209,40 @@ export async function editarMovimiento(
     return { ok: false, message };
   } else {
     revalidatePath('/movimientos');
+    revalidatePath('/cuentas');
+    revalidatePath('/');
     return { ok: true, message: 'Movimiento editado con exito!' };
+  }
+}
+
+export async function eliminarMovimiento(id: number) {
+  const responseMovement = await fetch(
+    process.env.NEXT_PUBLIC_API_URL + '/movimientos/' + id,
+    {
+      method: 'DELETE',
+    },
+  );
+
+  if (!responseMovement.ok) {
+    const errorBody: unknown = await responseMovement.json().catch(() => null);
+
+    let message = 'Error al eliminar el movimiento';
+
+    if (typeof errorBody === 'object' && errorBody !== null) {
+      const backMessage = (errorBody as { message?: unknown }).message;
+
+      if (typeof backMessage === 'string') {
+        message = backMessage;
+      } else if (Array.isArray(backMessage)) {
+        message = backMessage.join(', ');
+      }
+    }
+
+    return { ok: false, message };
+  } else {
+    revalidatePath('/movimientos');
+    revalidatePath('/cuentas');
+    revalidatePath('/');
+    return { ok: true, message: 'Movimiento eliminado con exito!' };
   }
 }
