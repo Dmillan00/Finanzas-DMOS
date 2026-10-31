@@ -1,28 +1,7 @@
 import MovimientoForm from './movimientoForm';
 
-type Movimiento = {
-  movimientoId: number;
-  nombre: string;
-  monto: string;
-  tipo: 'INGRESO' | 'GASTO' | 'TRANSFERENCIA';
-  fecha: string;
-  nota: string | null;
-  cuentaBaseId: number;
-  cuentaDestinoId: number | null;
-  categoria: { categoriaId: number; nombre: string } | null;
-};
-
-type Categoria = {
-  categoriaId: number;
-  nombre: string;
-  tipo: 'INGRESO' | 'GASTO';
-};
-
-type Cuenta = {
-  cuentaId: number;
-  nombre: string;
-  saldoInicial: string;
-};
+import type { Cuenta, Categoria, Movimiento } from '@/components/props';
+import EditarMovimiento from './editarMovimiento';
 
 const MESES = [
   'Enero',
@@ -108,6 +87,12 @@ export default async function Movimientos({
                   currency: 'EUR',
                 }).format(Number(movimiento.monto))}
               </p>
+              <EditarMovimiento
+                cuentas={cuentas}
+                categorias={categorias}
+                movimiento={movimiento}
+              />
+
               <p>
                 {new Intl.DateTimeFormat('es-Es', {
                   timeZone: 'Europe/Madrid',
