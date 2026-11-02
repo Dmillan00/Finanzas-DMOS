@@ -85,6 +85,28 @@ describe('MovimientosService', () => {
       });
     });
 
+    it('convierte fecha YYYY-MM-DD a Date al crear', async () => {
+      const dto = {
+        nombre: 'Nómina',
+        monto: 1500,
+        tipo: TipoMovimiento.INGRESO,
+        cuentaBaseId: 1,
+        categoriaId: 2,
+        fecha: '2026-11-02',
+      };
+      prismaServiceMock.movimiento.create.mockResolvedValue({
+        movimientoId: 1,
+        ...dto,
+      });
+
+      await service.createMovimiento(dto);
+
+      expect(prismaServiceMock.movimiento.create).toHaveBeenCalledWith({
+        data: { ...dto, fecha: new Date('2026-11-02') },
+        include: { categoria: true },
+      });
+    });
+
     it('crea una TRANSFERENCIA con destino y sin categoría', async () => {
       const dto = {
         nombre: 'Hucha',
@@ -401,6 +423,29 @@ describe('MovimientosService', () => {
       });
 
       expect(resultado).toEqual(actualizado);
+    });
+
+    it('convierte fecha YYYY-MM-DD a Date al actualizar', async () => {
+      prismaServiceMock.movimiento.findUnique.mockResolvedValue(existenteGasto);
+      prismaServiceMock.movimiento.update.mockResolvedValue(existenteGasto);
+
+      await service.updateMovimiento(1, { fecha: '2026-11-02' });
+
+      expect(prismaServiceMock.movimiento.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { fecha: new Date('2026-11-02') },
+        }),
+      );
+    });
+
+    it('no toca fecha al actualizar si no se envía', async () => {
+      prismaServiceMock.movimiento.findUnique.mockResolvedValue(existenteGasto);
+      prismaServiceMock.movimiento.update.mockResolvedValue(existenteGasto);
+
+      await service.updateMovimiento(1, { nombre: 'Nuevo nombre' });
+
+      const { data } = prismaServiceMock.movimiento.update.mock.calls[0][0];
+      expect(data.fecha).toBeUndefined();
     });
 
     it('lanza NotFoundException si update falla con P2025', async () => {

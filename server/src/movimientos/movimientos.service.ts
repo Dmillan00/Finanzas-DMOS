@@ -85,9 +85,13 @@ export class MovimientosService {
       categoria,
       data.cuentaDestinoId ?? null,
     );
+
+    const fechaDate = data.fecha ? new Date(data.fecha) : undefined;
+    const datosPrisma = { ...data, fecha: fechaDate };
+
     try {
       return await this.prisma.movimiento.create({
-        data,
+        data: datosPrisma,
         include: { categoria: true },
       });
     } catch (error) {
@@ -190,10 +194,13 @@ export class MovimientosService {
     }
     this.validarReglas(movimientoExistente.tipo, base, categoria, destino);
 
+    const fechaDate = data.fecha ? new Date(data.fecha) : undefined;
+    const datosPrisma = { ...data, fecha: fechaDate };
+
     try {
       return await this.prisma.movimiento.update({
         where: { movimientoId: id },
-        data,
+        data: datosPrisma,
         include: { categoria: true },
       });
     } catch (error) {
