@@ -88,12 +88,6 @@ export default async function Movimientos({
                   currency: 'EUR',
                 }).format(Number(movimiento.monto))}
               </p>
-              <EditarMovimiento
-                cuentas={cuentas}
-                categorias={categorias}
-                movimiento={movimiento}
-              />
-              <EliminarMovimiento movimiento={movimiento} />
               <p>
                 {new Intl.DateTimeFormat('es-Es', {
                   timeZone: 'Europe/Madrid',
@@ -107,6 +101,12 @@ export default async function Movimientos({
               )}
               <p>{movimiento.categoria?.nombre ?? 'Sin categoria'}</p>
               <p>{movimiento.nota}</p>
+              <EditarMovimiento
+                cuentas={cuentas}
+                categorias={categorias}
+                movimiento={movimiento}
+              />
+              <EliminarMovimiento movimiento={movimiento} />
             </li>
           ))}
         </ul>

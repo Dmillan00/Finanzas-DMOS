@@ -1,10 +1,7 @@
-type Categoria = {
-  categoriaId: number;
-  nombre: string;
-  tipo: 'GASTO' | 'INGRESO';
-};
-
 import CategoriaForm from './categoriaForm';
+import { Categoria } from '@/components/props';
+import EliminarCategoria from './eliminarCategoria';
+import EditarCategoria from './editarCategoria';
 
 export default async function Categorias() {
   const responseCategory = await fetch(
@@ -26,6 +23,8 @@ export default async function Categorias() {
           <li key={categoria.categoriaId}>
             <p>{categoria.nombre}</p>
             <p>{categoria.tipo}</p>
+            <EditarCategoria categoria={categoria} />
+            <EliminarCategoria categoria={categoria} />
           </li>
         ))}
       </ul>

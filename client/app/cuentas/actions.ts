@@ -9,7 +9,7 @@ export async function crearCuenta(
   formData: FormData,
 ): Promise<EstadoForm> {
   const nombre = formData.get('nombre');
-  const saldoInicial = Number(formData.get('saldoInicial'));
+  const saldoInicial = formData.get('saldoInicial');
 
   if (typeof nombre !== 'string') {
     return { ok: false, message: 'El tipo del nombre es incorrecto' };
@@ -19,8 +19,16 @@ export async function crearCuenta(
     return { ok: false, message: 'El nombre no puede estar vacio' };
   }
 
-  if (Number.isNaN(saldoInicial)) {
-    return { ok: false, message: 'El valor del saldo no es correcto' };
+  if (typeof saldoInicial !== 'string') {
+    return { ok: false, message: 'El tipo del saldo inicial es incorrecto ' };
+  } else if (saldoInicial.trim() == '') {
+    return { ok: false, message: 'El saldo inicial no puede estar vacio' };
+  }
+
+  const saldo = Number(saldoInicial);
+
+  if (Number.isNaN(saldo)) {
+    return { ok: false, message: 'Saldo no valido' };
   }
 
   const responseAccount = await fetch(
@@ -30,7 +38,7 @@ export async function crearCuenta(
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         nombre,
-        saldoInicial,
+        saldoInicial: saldo,
       }),
     },
   );
@@ -38,7 +46,105 @@ export async function crearCuenta(
   if (!responseAccount.ok) {
     return { ok: false, message: 'Error al crear la cuenta' };
   } else {
+    revalidatePath('/movimientos');
     revalidatePath('/cuentas');
+    revalidatePath('/');
     return { ok: true, message: 'Cuenta creada con exito!' };
+  }
+}
+
+export async function editarCuenta(
+  id: number,
+  estadoPrevio: EstadoForm,
+  formData: FormData,
+): Promise<EstadoForm> {
+  const nombre = formData.get('nombre');
+  const saldoInicial = formData.get('saldoInicial');
+
+  if (typeof nombre !== 'string') {
+    return { ok: false, message: 'El tipo del nombre es incorrecto' };
+  }
+
+  if (nombre.trim() === '') {
+    return { ok: false, message: 'El nombre no puede estar vacio' };
+  }
+
+  if (typeof saldoInicial !== 'string') {
+    return { ok: false, message: 'El tipo del saldo inicial es incorrecto ' };
+  } else if (saldoInicial.trim() == '') {
+    return { ok: false, message: 'El saldo inicial no puede estar vacio' };
+  }
+
+  const saldo = Number(saldoInicial);
+
+  if (Number.isNaN(saldo)) {
+    return { ok: false, message: 'Saldo no valido' };
+  }
+
+  const responseAccount = await fetch(
+    process.env.NEXT_PUBLIC_API_URL + '/cuentas/' + id,
+    {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        nombre,
+        saldoInicial: saldo,
+      }),
+    },
+  );
+
+  if (!responseAccount.ok) {
+    const errorBody: unknown = await responseAccount.json().catch(() => null);
+
+    let message = 'Error al editar la cuenta';
+
+    if (typeof errorBody === 'object' && errorBody !== null) {
+      const backMessage = (errorBody as { message?: unknown }).message;
+
+      if (typeof backMessage === 'string') {
+        message = backMessage;
+      } else if (Array.isArray(backMessage)) {
+        message = backMessage.join(', ');
+      }
+    }
+
+    return { ok: false, message };
+  } else {
+    revalidatePath('/movimientos');
+    revalidatePath('/cuentas');
+    revalidatePath('/');
+    return { ok: true, message: 'Cuenta editada con exito!' };
+  }
+}
+
+export async function eliminarCuenta(id: number) {
+  const responseAccount = await fetch(
+    process.env.NEXT_PUBLIC_API_URL + '/cuentas/' + id,
+    {
+      method: 'DELETE',
+    },
+  );
+
+  if (!responseAccount.ok) {
+    const errorBody: unknown = await responseAccount.json().catch(() => null);
+
+    let message = 'Error al eliminar la cuenta';
+
+    if (typeof errorBody === 'object' && errorBody !== null) {
+      const backMessage = (errorBody as { message?: unknown }).message;
+
+      if (typeof backMessage === 'string') {
+        message = backMessage;
+      } else if (Array.isArray(backMessage)) {
+        message = backMessage.join(', ');
+      }
+    }
+
+    return { ok: false, message };
+  } else {
+    revalidatePath('/movimientos');
+    revalidatePath('/cuentas');
+    revalidatePath('/');
+    return { ok: true, message: 'Cuenta eliminada con exito!' };
   }
 }

@@ -1,5 +1,7 @@
 import CuentaForm from './cuentaForm';
 import type { Cuenta } from '@/components/props';
+import EliminarCuenta from './eliminarCuenta';
+import EditarCuenta from './editarCuenta';
 
 export default async function Cuentas() {
   const responseAccount = await fetch(
@@ -26,6 +28,8 @@ export default async function Cuentas() {
                 currency: 'EUR',
               }).format(Number(cuenta.saldoActual))}
             </p>
+            <EditarCuenta cuenta={cuenta} />
+            <EliminarCuenta cuenta={cuenta} />
           </li>
         ))}
       </ul>
