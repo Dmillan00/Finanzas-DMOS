@@ -111,9 +111,9 @@ describe('categorias (e2e)', () => {
       .get('/categorias?tipo=GASTO')
       .expect(200);
 
-    expect(
-      res.body.every((c: { tipo: string }) => c.tipo === 'GASTO'),
-    ).toBe(true);
+    expect(res.body.every((c: { tipo: string }) => c.tipo === 'GASTO')).toBe(
+      true,
+    );
     expect(
       res.body.some(
         (c: { categoriaId: number }) => c.categoriaId === categoriaCreadaId,
@@ -126,9 +126,9 @@ describe('categorias (e2e)', () => {
       .get('/categorias?tipo=INGRESO')
       .expect(200);
 
-    expect(
-      res.body.every((c: { tipo: string }) => c.tipo === 'INGRESO'),
-    ).toBe(true);
+    expect(res.body.every((c: { tipo: string }) => c.tipo === 'INGRESO')).toBe(
+      true,
+    );
     expect(
       res.body.some(
         (c: { categoriaId: number }) => c.categoriaId === categoriaIngresoId,

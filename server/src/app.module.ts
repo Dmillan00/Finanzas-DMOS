@@ -5,9 +5,16 @@ import { CuentasModule } from './cuentas/cuentas.module.js';
 import { MovimientosModule } from './movimientos/movimientos.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { CategoriasModule } from './categorias/categorias.module.js';
+import { DashboardModule } from './dashboard/dashboard.module.js';
 
 @Module({
-  imports: [CuentasModule, MovimientosModule, PrismaModule, CategoriasModule],
+  imports: [
+    CuentasModule,
+    MovimientosModule,
+    PrismaModule,
+    CategoriasModule,
+    DashboardModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
