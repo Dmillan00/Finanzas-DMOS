@@ -1,9 +1,16 @@
 'use client';
 
 import type { Cuenta, Categoria, Movimiento } from '@/components/props';
-import Modal from '@/components/modal';
 import { useState } from 'react';
 import MovimientoForm from './movimientoForm';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 export default function EditarMovimiento({
   cuentas,
@@ -17,12 +24,15 @@ export default function EditarMovimiento({
   const [abierto, setAbierto] = useState(false);
 
   return (
-    <div>
-      <button type="button" onClick={() => setAbierto(true)}>
-        Editar
-      </button>
-
-      <Modal abierto={abierto} onClose={() => setAbierto(false)}>
+    <Dialog open={abierto} onOpenChange={setAbierto}>
+      <DialogTrigger render={<Button variant={'outline'}>Editar</Button>} />
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            Editar Movimiento:{' '}
+            <span className="text-primary">{movimiento.nombre}</span>
+          </DialogTitle>
+        </DialogHeader>
         {abierto && (
           <MovimientoForm
             cuentas={cuentas}
@@ -31,10 +41,7 @@ export default function EditarMovimiento({
             onExito={() => setAbierto(false)}
           />
         )}
-        <button type="button" onClick={() => setAbierto(false)}>
-          Cerrar
-        </button>
-      </Modal>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

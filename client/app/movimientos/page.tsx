@@ -1,8 +1,9 @@
-import MovimientoForm from './movimientoForm';
 import { formatearFecha, formatearMonto } from '@/libs/formatos';
 import type { Cuenta, Categoria, Movimiento } from '@/components/props';
 import EditarMovimiento from './editarMovimiento';
 import EliminarMovimiento from './eliminarMovimiento';
+import { Button } from '@/components/ui/button';
+import NuevoMovimiento from './nuevoMovimiento';
 
 const MESES = [
   'Enero',
@@ -63,7 +64,7 @@ export default async function Movimientos({
   return (
     <main>
       <h1>Movimientos</h1>
-      <MovimientoForm cuentas={cuentas} categorias={categorias} />
+      <NuevoMovimiento cuentas={cuentas} categorias={categorias} />
       <form method="get">
         <select name="month" defaultValue={month}>
           {MESES.map((nombre, i) => (
@@ -73,7 +74,7 @@ export default async function Movimientos({
           ))}
         </select>
         <input name="year" defaultValue={year} type="number" />
-        <button type="submit">filtrar</button>
+        <Button type="submit">filtrar</Button>
       </form>
       {movimientos.length === 0 ? (
         <h2>La lista esta vacia</h2>

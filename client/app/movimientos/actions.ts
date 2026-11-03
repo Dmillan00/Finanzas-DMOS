@@ -42,6 +42,10 @@ export async function crearMovimiento(
     return { ok: false, message: 'Nombre y tipo deben ser strings' };
   }
 
+  if (nombre.trim() === '') {
+    return { ok: false, message: 'El nombre no puede estar vacío' };
+  }
+
   if (Number(monto) <= 0 || Number.isNaN(monto)) {
     return { ok: false, message: 'Error en el formato del monto' };
   }
@@ -114,7 +118,7 @@ export async function crearMovimiento(
     revalidatePath('/movimientos');
     revalidatePath('/cuentas');
     revalidatePath('/');
-    return { ok: true, message: 'Movimiento creado con exito!' };
+    return { ok: true, message: 'Movimiento creado con éxito!' };
   }
 }
 
@@ -133,6 +137,10 @@ export async function editarMovimiento(
 
   if (typeof nombre !== 'string') {
     return { ok: false, message: 'Nombre debe ser strings' };
+  }
+
+  if (nombre.trim() === '') {
+    return { ok: false, message: 'El nombre no puede estar vacío' };
   }
 
   if (Number(monto) <= 0 || Number.isNaN(monto)) {
@@ -165,7 +173,6 @@ export async function editarMovimiento(
     } else {
       BaseEditarMovimiento.nota = null;
     }
-  } else {
   }
 
   if (typeof categoriaId === 'string' && categoriaId.length > 0) {
@@ -211,7 +218,7 @@ export async function editarMovimiento(
     revalidatePath('/movimientos');
     revalidatePath('/cuentas');
     revalidatePath('/');
-    return { ok: true, message: 'Movimiento editado con exito!' };
+    return { ok: true, message: 'Movimiento editado con éxito!' };
   }
 }
 
@@ -243,6 +250,6 @@ export async function eliminarMovimiento(id: number) {
     revalidatePath('/movimientos');
     revalidatePath('/cuentas');
     revalidatePath('/');
-    return { ok: true, message: 'Movimiento eliminado con exito!' };
+    return { ok: true, message: 'Movimiento eliminado con éxito!' };
   }
 }
