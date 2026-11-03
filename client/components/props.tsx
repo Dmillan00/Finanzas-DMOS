@@ -22,3 +22,19 @@ export type Movimiento = {
   cuentaDestinoId: number | null;
   categoria: { categoriaId: number; nombre: string } | null;
 };
+
+export type Dashboard = {
+  periodo: { desde: string; hasta: string }; // Llega como ISO
+  totales: { ingresos: string; gastos: string; queda: string };
+  ultimos: UltimoMovimiento[];
+};
+
+export type UltimoMovimiento = {
+  movimientoId: number;
+  nombre: string;
+  monto: string;
+  tipo: 'INGRESO' | 'GASTO';
+  categoria: { nombre: string } | null;
+};
+
+export type Tipo = 'INGRESO' | 'GASTO' | 'TRANSFERENCIA';

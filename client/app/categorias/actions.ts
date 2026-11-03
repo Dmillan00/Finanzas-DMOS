@@ -53,6 +53,7 @@ export async function crearCategoria(
   } else {
     revalidatePath('/movimientos');
     revalidatePath('/categorias');
+    revalidatePath('/');
     return { ok: true, message: 'Categoria creada con exito!' };
   }
 }
@@ -102,6 +103,7 @@ export async function editarCategoria(
   } else {
     revalidatePath('/movimientos');
     revalidatePath('/categorias');
+    revalidatePath('/');
     return { ok: true, message: 'Categoria editada con exito!' };
   }
 }
@@ -133,6 +135,7 @@ export async function eliminarCategoria(id: number) {
   } else {
     revalidatePath('/movimientos');
     revalidatePath('/categorias');
+    revalidatePath('/');
     return { ok: true, message: 'Categoria eliminada con exito!' };
   }
 }

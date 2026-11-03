@@ -2,19 +2,19 @@
 
 import { useActionState, useState, useEffect } from 'react';
 import { crearMovimiento, editarMovimiento } from './actions';
-import type { Cuenta, Categoria, Movimiento } from '@/components/props';
-
-type Tipo = 'INGRESO' | 'GASTO' | 'TRANSFERENCIA';
+import type { Cuenta, Categoria, Movimiento, Tipo } from '@/components/props';
 
 export default function MovimientoForm({
   cuentas,
   categorias,
   movimiento,
   onExito,
+  tipoInicial,
 }: {
   cuentas: Cuenta[];
   categorias: Categoria[];
   movimiento?: Movimiento;
+  tipoInicial?: Tipo;
   onExito?: () => void;
 }) {
   const accion = movimiento
@@ -25,7 +25,9 @@ export default function MovimientoForm({
     ok: false,
     message: '',
   });
-  const [tipo, setTipo] = useState<Tipo>(movimiento?.tipo ?? 'GASTO');
+  const [tipo, setTipo] = useState<Tipo>(
+    movimiento?.tipo ?? tipoInicial ?? 'GASTO',
+  );
   useEffect(() => {
     if (state.ok) onExito?.();
   }, [state.ok, onExito]);

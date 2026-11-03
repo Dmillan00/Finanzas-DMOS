@@ -1,5 +1,5 @@
 import MovimientoForm from './movimientoForm';
-
+import { formatearFecha, formatearMonto } from '@/libs/formatos';
 import type { Cuenta, Categoria, Movimiento } from '@/components/props';
 import EditarMovimiento from './editarMovimiento';
 import EliminarMovimiento from './eliminarMovimiento';
@@ -82,17 +82,8 @@ export default async function Movimientos({
           {movimientos.map((movimiento) => (
             <li key={movimiento.movimientoId}>
               <p>{movimiento.nombre}</p>
-              <p>
-                {new Intl.NumberFormat('es-Es', {
-                  style: 'currency',
-                  currency: 'EUR',
-                }).format(Number(movimiento.monto))}
-              </p>
-              <p>
-                {new Intl.DateTimeFormat('es-Es', {
-                  timeZone: 'Europe/Madrid',
-                }).format(new Date(movimiento.fecha))}
-              </p>
+              <p>{formatearMonto(movimiento.monto)}</p>
+              <p>{formatearFecha(movimiento.fecha)}</p>
               <p>{movimiento.tipo}</p>
               <p>{nombreCuenta.get(movimiento.cuentaBaseId)}</p>
 

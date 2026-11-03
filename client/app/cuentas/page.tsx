@@ -1,5 +1,6 @@
 import CuentaForm from './cuentaForm';
 import type { Cuenta } from '@/components/props';
+import { formatearMonto } from '@/libs/formatos';
 import EliminarCuenta from './eliminarCuenta';
 import EditarCuenta from './editarCuenta';
 
@@ -22,12 +23,7 @@ export default async function Cuentas() {
         {cuentas.map((cuenta) => (
           <li key={cuenta.cuentaId}>
             <p>{cuenta.nombre}</p>
-            <p>
-              {new Intl.NumberFormat('es-Es', {
-                style: 'currency',
-                currency: 'EUR',
-              }).format(Number(cuenta.saldoActual))}
-            </p>
+            <p>{formatearMonto(cuenta.saldoActual)}</p>
             <EditarCuenta cuenta={cuenta} />
             <EliminarCuenta cuenta={cuenta} />
           </li>
