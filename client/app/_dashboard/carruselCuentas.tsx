@@ -2,13 +2,7 @@
 
 import type { Cuenta } from '@/components/props';
 import { useState } from 'react';
-import Image from 'next/image';
-import { formatearMonto } from '@/libs/formatos';
-
-const imgs: Record<string, string> = {
-  BBVA: '/cards/bbva.jpg',
-  'Trade Republic': '/cards/trade-republic.png',
-};
+import TarjetaCuenta from '@/components/tarjetaCuenta';
 
 export default function CarruselCuentas({ cuentas }: { cuentas: Cuenta[] }) {
   const [indice, setIndice] = useState(0);
@@ -22,27 +16,11 @@ export default function CarruselCuentas({ cuentas }: { cuentas: Cuenta[] }) {
       </section>
     );
   }
-  const imagen = imgs[cuenta.nombre];
 
   return (
     <section>
       <h2>Cuentas</h2>
-      <div className="relative aspect-[1.586] overflow-hidden rounded-xl">
-        {imagen ? (
-          <Image
-            src={imagen}
-            alt={cuenta.nombre}
-            fill
-            sizes="33vw"
-            className="object-cover"
-          />
-        ) : (
-          <div className="bg-linear-to-b from-slate-100 to-slate-900 absolute inset-0"></div>
-        )}
-        <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 p-3">
-          <p>{cuenta.nombre}</p>
-          <p>{formatearMonto(cuenta.saldoActual)}</p>
-        </div>
+      <TarjetaCuenta cuenta={cuenta}>
         <ul className="flex gap-2 absolute right-3.5 top-1 ">
           {cuentas.map((c, i) => {
             return (
@@ -61,7 +39,7 @@ export default function CarruselCuentas({ cuentas }: { cuentas: Cuenta[] }) {
             );
           })}
         </ul>
-      </div>
+      </TarjetaCuenta>
     </section>
   );
 }

@@ -108,7 +108,7 @@ export default async function Movimientos({
     <main className="px-5 py-2 mx-auto w-full max-w-7xl">
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-3xl font-semibold">Movimientos</h1>
+          <h1 className="text-3xl font-semibold text-primary">Movimientos</h1>
           <span className="text-muted-foreground">
             {movimientos.length} movimientos en {selectMeses[month - 1].label}
           </span>

@@ -3,6 +3,10 @@
 import { useActionState, useEffect } from 'react';
 import { crearCuenta, editarCuenta } from './actions';
 import type { Cuenta } from '@/components/props';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
 
 export default function CuentaForm({
   cuenta,
@@ -20,41 +24,57 @@ export default function CuentaForm({
     message: '',
   });
 
+  const textButton = cuenta
+    ? pending
+      ? 'Guardando...'
+      : 'Guardar'
+    : pending
+      ? 'Creando...'
+      : 'Crear';
+
   useEffect(() => {
-    if (state.ok) onExito?.();
-  }, [state.ok, onExito]);
+    if (!state.message) {
+      return;
+    }
+
+    if (state.ok) {
+      toast.success(state.message);
+      onExito?.();
+    } else {
+      toast.error(state.message);
+    }
+  }, [state, onExito]);
 
   return (
     <div>
       <form action={formAction}>
-        <label>
-          Nombre{' '}
-          <input
-            name="nombre"
-            type="text"
-            defaultValue={cuenta?.nombre ?? ''}
-          />
-        </label>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="nombre">Nombre </FieldLabel>
+            <Input
+              name="nombre"
+              type="text"
+              id="nombre"
+              defaultValue={cuenta?.nombre ?? ''}
+              placeholder="BBVA"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="saldoInicial">Saldo inicial</FieldLabel>
+            <Input
+              name="saldoInicial"
+              type="number"
+              step={0.01}
+              id="saldoInicial"
+              defaultValue={cuenta?.saldoInicial}
+            />
+          </Field>
 
-        <label>
-          Saldo inicial{' '}
-          <input
-            name="saldoInicial"
-            type="number"
-            step={0.01}
-            defaultValue={cuenta?.saldoInicial}
-          />
-        </label>
-
-        <button type="submit" disabled={pending}>
-          Enviar
-        </button>
+          <Button type="submit" disabled={pending} className={'font-bold'}>
+            {textButton}
+          </Button>
+        </FieldGroup>
       </form>
-      {state.message && (
-        <p className={state.ok ? 'clase-verde' : 'clase-roja'}>
-          {state.message}
-        </p>
-      )}
     </div>
   );
 }

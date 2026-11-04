@@ -19,7 +19,7 @@ export default function NuevaCategoria() {
       <DialogTrigger
         render={
           <Button variant={'default'}>
-            <PlusIcon></PlusIcon>Nueva
+            <PlusIcon></PlusIcon>Nuevo
           </Button>
         }
       />

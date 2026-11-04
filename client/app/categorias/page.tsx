@@ -34,7 +34,7 @@ export default async function Categorias() {
     <main className="px-5 py-2 mx-auto w-full max-w-7xl">
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-3xl font-semibold">Categorías</h1>
+          <h1 className="text-3xl font-semibold  text-primary">Categorías</h1>
           <span className="text-muted-foreground">
             {categorias.length} categorías
           </span>
