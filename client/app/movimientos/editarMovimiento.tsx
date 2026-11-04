@@ -3,6 +3,7 @@
 import type { Cuenta, Categoria, Movimiento } from '@/components/props';
 import { useState } from 'react';
 import MovimientoForm from './movimientoForm';
+import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,7 +26,17 @@ export default function EditarMovimiento({
 
   return (
     <Dialog open={abierto} onOpenChange={setAbierto}>
-      <DialogTrigger render={<Button variant={'outline'}>Editar</Button>} />
+      <DialogTrigger
+        render={
+          <Button
+            variant={'ghost'}
+            className={'text-muted-foreground '}
+            size="icon-sm"
+          >
+            <Pencil></Pencil>
+          </Button>
+        }
+      />
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>

@@ -27,7 +27,7 @@ export default function NuevoMovimiento({
       <DialogTrigger
         render={
           <Button variant={'default'}>
-            Nuevo Movimiento <PlusIcon></PlusIcon>
+            <PlusIcon></PlusIcon>Nuevo
           </Button>
         }
       />

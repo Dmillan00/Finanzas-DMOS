@@ -9,6 +9,13 @@ const periodo = new Intl.DateTimeFormat('es-ES', {
   timeZone: 'UTC',
 });
 
+const dia = new Intl.DateTimeFormat('es-ES', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'Europe/Madrid',
+});
+
 export function formatearMonto(valor: string) {
   return monto.format(Number(valor));
 }
@@ -19,4 +26,8 @@ export function formatearFecha(iso: string) {
 
 export function formatearPeriodo(iso: string) {
   return periodo.format(new Date(iso));
+}
+
+export function formatearDia(iso: string) {
+  return dia.format(new Date(iso));
 }

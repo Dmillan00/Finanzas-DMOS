@@ -3,6 +3,7 @@ import type { Movimiento } from '@/components/props';
 import { useTransition, useState } from 'react';
 import { eliminarMovimiento } from './actions';
 import { Button } from '@/components/ui/button';
+import { Trash } from 'lucide-react';
 import {
   Dialog,
   DialogClose,
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { toast } from 'sonner';
+import icon from 'lucide-react/icons/';
 
 export default function EliminarMovimiento({
   movimiento,
@@ -39,15 +41,22 @@ export default function EliminarMovimiento({
   return (
     <Dialog open={abierto} onOpenChange={setAbierto}>
       <DialogTrigger
-        render={<Button variant={'destructive'}>Eliminar</Button>}
+        render={
+          <Button
+            variant={'ghost'}
+            className={'text-muted-foreground hover:text-destructive'}
+            size="icon-sm"
+          >
+            <Trash></Trash>
+          </Button>
+        }
       />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>¿Eliminar Movimiento?</DialogTitle>
           <DialogDescription>
             Esta acción no se puede deshacer, ¿estás seguro que quieres
-            eliminarlo?{' '}
-            <span className="text-primary">{movimiento.nombre}</span>?
+            eliminar: <span className="text-primary">{movimiento.nombre}</span>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

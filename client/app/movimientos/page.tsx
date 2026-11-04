@@ -1,24 +1,40 @@
-import { formatearFecha, formatearMonto } from '@/libs/formatos';
+import { formatearDia, formatearMonto } from '@/libs/formatos';
 import type { Cuenta, Categoria, Movimiento } from '@/components/props';
+import { ArrowLeftRight, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import EditarMovimiento from './editarMovimiento';
 import EliminarMovimiento from './eliminarMovimiento';
 import { Button } from '@/components/ui/button';
 import NuevoMovimiento from './nuevoMovimiento';
-
-const MESES = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+const ESTILO_TIPO = {
+  GASTO: {
+    icono: ArrowDownRight,
+    clases: 'bg-red-500/15 text-red-400',
+    signo: '-',
+    colorMonto: 'text-red-400',
+  },
+  INGRESO: {
+    icono: ArrowUpRight,
+    clases: 'bg-green-500/15 text-green-400',
+    signo: '+',
+    colorMonto: 'text-sky-400',
+  },
+  TRANSFERENCIA: {
+    icono: ArrowLeftRight,
+    clases: 'bg-primary/15 text-primary',
+    signo: '',
+    colorMonto: '',
+  },
+};
 
 export default async function Movimientos({
   searchParams,
@@ -61,47 +77,156 @@ export default async function Movimientos({
     cuentas.map((cuenta) => [cuenta.cuentaId, cuenta.nombre]),
   );
 
-  return (
-    <main>
-      <h1>Movimientos</h1>
-      <NuevoMovimiento cuentas={cuentas} categorias={categorias} />
-      <form method="get">
-        <select name="month" defaultValue={month}>
-          {MESES.map((nombre, i) => (
-            <option key={nombre} value={i + 1}>
-              {nombre}
-            </option>
-          ))}
-        </select>
-        <input name="year" defaultValue={year} type="number" />
-        <Button type="submit">filtrar</Button>
-      </form>
-      {movimientos.length === 0 ? (
-        <h2>La lista esta vacia</h2>
-      ) : (
-        <ul>
-          {movimientos.map((movimiento) => (
-            <li key={movimiento.movimientoId}>
-              <p>{movimiento.nombre}</p>
-              <p>{formatearMonto(movimiento.monto)}</p>
-              <p>{formatearFecha(movimiento.fecha)}</p>
-              <p>{movimiento.tipo}</p>
-              <p>{nombreCuenta.get(movimiento.cuentaBaseId)}</p>
+  const selectMeses = [
+    { label: 'Enero', value: '1' },
+    { label: 'Febrero', value: '2' },
+    { label: 'Marzo', value: '3' },
+    { label: 'Abril', value: '4' },
+    { label: 'Mayo', value: '5' },
+    { label: 'Junio', value: '6' },
+    { label: 'Julio', value: '7' },
+    { label: 'Agosto', value: '8' },
+    { label: 'Septiembre', value: '9' },
+    { label: 'Octubre', value: '10' },
+    { label: 'Noviembre', value: '11' },
+    { label: 'Diciembre', value: '12' },
+  ];
 
-              {movimiento.cuentaDestinoId !== null && (
-                <p>{nombreCuenta.get(movimiento.cuentaDestinoId)}</p>
-              )}
-              <p>{movimiento.categoria?.nombre ?? 'Sin categoria'}</p>
-              <p>{movimiento.nota}</p>
-              <EditarMovimiento
-                cuentas={cuentas}
-                categorias={categorias}
-                movimiento={movimiento}
-              />
-              <EliminarMovimiento movimiento={movimiento} />
-            </li>
+  const grupos = new Map<string, Movimiento[]>();
+
+  for (const mov of movimientos) {
+    const clave = formatearDia(mov.fecha);
+
+    if (!grupos.has(clave)) {
+      grupos.set(clave, []);
+    }
+
+    grupos.get(clave)?.push(mov);
+  }
+
+  return (
+    <main className="px-5 py-2">
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold">Movimientos</h1>
+          <span className="text-muted-foreground">
+            {movimientos.length} movimientos en {selectMeses[month - 1].label}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <form method="get" className="flex items-center gap-2">
+            <Select
+              items={selectMeses}
+              name="month"
+              defaultValue={String(month)}
+            >
+              <SelectTrigger id="month" className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false}>
+                <SelectGroup>
+                  {selectMeses.map((mes) => (
+                    <SelectItem key={mes.value} value={mes.value}>
+                      {mes.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+
+            <Input
+              className="w-24"
+              name="year"
+              defaultValue={year}
+              type="number"
+            />
+            <Button variant="outline" type="submit">
+              Filtrar
+            </Button>
+          </form>
+          <NuevoMovimiento cuentas={cuentas} categorias={categorias} />
+        </div>
+      </div>
+
+      {grupos.size === 0 ? (
+        <p className="mt-5 rounded-xl border border-dashed py-12 text-center text-muted-foreground">
+          Sin movimientos en {selectMeses[month - 1].label} de {year}
+        </p>
+      ) : (
+        <div className="flex flex-col gap-6 mt-5">
+          {[...grupos].map(([dia, lista]) => (
+            <section key={dia}>
+              <p className="text-sm text-muted-foreground mb-2 first-letter:uppercase">
+                {dia}
+              </p>
+              <ul className="rounded-xl border divide-y">
+                {lista.map((movimiento) => {
+                  const partes =
+                    movimiento.tipo === 'TRANSFERENCIA'
+                      ? [
+                          [
+                            nombreCuenta.get(movimiento.cuentaBaseId),
+                            movimiento.cuentaDestinoId !== null
+                              ? nombreCuenta.get(movimiento.cuentaDestinoId)
+                              : undefined,
+                          ]
+                            .filter(Boolean)
+                            .join(' → '),
+                          movimiento.nota,
+                        ]
+                      : [
+                          movimiento.categoria?.nombre,
+                          nombreCuenta.get(movimiento.cuentaBaseId),
+                          movimiento.nota,
+                        ];
+
+                  const datos = partes.filter(Boolean).join(' · ');
+                  const estilo = ESTILO_TIPO[movimiento.tipo];
+                  const Icono = estilo.icono;
+
+                  return (
+                    <li
+                      className="flex items-center gap-4 px-4 py-3"
+                      key={movimiento.movimientoId}
+                    >
+                      <div
+                        className={cn(
+                          'size-10 rounded-lg flex items-center justify-center',
+                          estilo.clases,
+                        )}
+                      >
+                        <Icono></Icono>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium">{movimiento.nombre}</p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {datos}
+                        </p>
+                      </div>
+
+                      <p
+                        className={cn(
+                          'tabular-nums font-medium',
+                          estilo.colorMonto,
+                        )}
+                      >
+                        {estilo.signo}
+                        {formatearMonto(movimiento.monto)}
+                      </p>
+
+                      <EditarMovimiento
+                        cuentas={cuentas}
+                        categorias={categorias}
+                        movimiento={movimiento}
+                      />
+                      <EliminarMovimiento movimiento={movimiento} />
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       )}
     </main>
   );
