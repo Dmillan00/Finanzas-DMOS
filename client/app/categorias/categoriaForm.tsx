@@ -3,6 +3,23 @@
 import { useActionState, useEffect } from 'react';
 import { crearCategoria, editarCategoria } from './actions';
 import type { Categoria } from '@/components/props';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+
+const selectTipo = [
+  { label: 'Ingreso', value: 'INGRESO' },
+  { label: 'Gasto', value: 'GASTO' },
+];
 
 export default function CategoriaForm({
   categoria,
@@ -20,43 +37,71 @@ export default function CategoriaForm({
     message: '',
   });
 
+  const textButton = categoria
+    ? pending
+      ? 'Guardando...'
+      : 'Guardar'
+    : pending
+      ? 'Creando...'
+      : 'Crear';
+
   useEffect(() => {
-    if (state.ok) onExito?.();
-  }, [state.ok, onExito]);
+    if (!state.message) {
+      return;
+    }
+
+    if (state.ok) {
+      toast.success(state.message);
+      onExito?.();
+    } else {
+      toast.error(state.message);
+    }
+  }, [state, onExito]);
 
   return (
     <div>
       <form action={formAction}>
-        <label>
-          Nombre{' '}
-          <input
-            name="nombre"
-            type="text"
-            defaultValue={categoria?.nombre ?? ''}
-          />
-        </label>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="nombre"> Nombre </FieldLabel>
 
-        {categoria ? (
-          <p>Tipo : {categoria?.tipo}</p>
-        ) : (
-          <div>
-            <label htmlFor="tipo">Tipo</label>
-            <select name="tipo" id="tipo">
-              <option value="INGRESO">Ingreso</option>
-              <option value="GASTO">Gasto</option>
-            </select>
-          </div>
-        )}
+            <Input
+              name="nombre"
+              type="text"
+              id="nombre"
+              defaultValue={categoria?.nombre ?? ''}
+              placeholder="Comida"
+            />
+          </Field>
+          <Field>
+            {categoria ? (
+              <p>Tipo : {categoria?.tipo}</p>
+            ) : (
+              <>
+                <FieldLabel htmlFor="tipo">Tipo</FieldLabel>
+                <Select defaultValue={'GASTO'} items={selectTipo} name="tipo">
+                  <SelectTrigger id="tipo" className="w-full">
+                    <SelectValue placeholder="Elige un tipo"></SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {selectTipo.map((tipo) => (
+                        <SelectItem key={tipo.value} value={tipo.value}>
+                          {tipo.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </>
+            )}
+          </Field>
 
-        <button type="submit" disabled={pending}>
-          Enviar
-        </button>
+          <Button type="submit" disabled={pending} className={'font-bold'}>
+            {textButton}
+          </Button>
+        </FieldGroup>
       </form>
-      {state.message && (
-        <p className={state.ok ? 'clase-verde' : 'clase-roja'}>
-          {state.message}
-        </p>
-      )}
     </div>
   );
 }

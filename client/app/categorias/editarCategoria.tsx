@@ -1,9 +1,17 @@
 'use client';
 
 import type { Categoria } from '@/components/props';
-import Modal from '@/components/modal';
 import { useState } from 'react';
 import CategoriaForm from './categoriaForm';
+import { Pencil } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 export default function EditarCategoria({
   categoria,
@@ -13,22 +21,32 @@ export default function EditarCategoria({
   const [abierto, setAbierto] = useState(false);
 
   return (
-    <div>
-      <button type="button" onClick={() => setAbierto(true)}>
-        Editar
-      </button>
-
-      <Modal abierto={abierto} onClose={() => setAbierto(false)}>
+    <Dialog open={abierto} onOpenChange={setAbierto}>
+      <DialogTrigger
+        render={
+          <Button
+            variant={'ghost'}
+            className={'text-muted-foreground '}
+            size="icon-sm"
+          >
+            <Pencil></Pencil>
+          </Button>
+        }
+      />
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>
+            Editar Categoría:{' '}
+            <span className="text-primary">{categoria.nombre}</span>
+          </DialogTitle>
+        </DialogHeader>
         {abierto && (
           <CategoriaForm
             categoria={categoria}
             onExito={() => setAbierto(false)}
           />
         )}
-        <button type="button" onClick={() => setAbierto(false)}>
-          Cerrar
-        </button>
-      </Modal>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

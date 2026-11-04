@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/dialog';
 
 import { toast } from 'sonner';
-import icon from 'lucide-react/icons/';
 
 export default function EliminarMovimiento({
   movimiento,
