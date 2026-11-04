@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Inter } from 'next/font/google';
 import './globals.css';
-import Link from 'next/link';
+import Navbar from '@/components/navbar';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -38,12 +38,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     >
       <body className="min-h-full flex flex-col">
         <Toaster />
-        <nav>
-          <Link href="/">Dashboard</Link>
-          <Link href="/cuentas">Cuentas</Link>
-          <Link href="/movimientos">Movimientos</Link>
-          <Link href="/categorias">Categorias</Link>
-        </nav>
+        <Navbar />
         {children}
       </body>
     </html>
