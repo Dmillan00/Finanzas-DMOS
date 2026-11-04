@@ -34,8 +34,8 @@ export default function Navbar() {
   const path = usePathname();
 
   return (
-    <header className="flex items-center justify-between px-5 py-2">
-      <h2>Finanzas DMOS</h2>{' '}
+    <header className="flex items-center mx-auto w-full justify-between px-5 py-2 max-w-7xl">
+      <h2 className="text-2xl">Finanzas DMOS</h2>
       <NavigationMenu>
         <NavigationMenuList className="rounded-full border p-1">
           {enlaces.map((item) => (

@@ -105,7 +105,7 @@ export default async function Movimientos({
   }
 
   return (
-    <main className="px-5 py-2">
+    <main className="px-5 py-2 mx-auto w-full max-w-7xl">
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-semibold">Movimientos</h1>
