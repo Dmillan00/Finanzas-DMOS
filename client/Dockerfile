@@ -51,6 +51,8 @@ FROM node:22-slim
 # Hay que repetirlo: la etapa nueva no recuerda el WORKDIR anterior.
 WORKDIR /app
 
+ 
+
 # El servidor mínimo (server.js) con sus node_modules justos.
 # Por eso aquí NO hay npm ci: standalone ya trae lo necesario.
 COPY --from=build /app/.next/standalone ./

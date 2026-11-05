@@ -60,6 +60,8 @@ FROM node:22-slim
 # Sin él trabajaríamos en la raíz del sistema (/), mezclado con /bin, /etc...
 WORKDIR /app
 
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 # Copiamos de nuevo los package*.json desde tu PC (contexto de build):
 # la etapa está vacía y npm ci los necesita para saber qué instalar.
 # Mismo truco de caché que en la etapa build.
