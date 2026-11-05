@@ -3,8 +3,10 @@ import EsteMes from './_dashboard/esteMes';
 import UltimosMovimientos from './_dashboard/ultimosMovimientos';
 import CarruselCuentas from './_dashboard/carruselCuentas';
 import NuevoMovimiento from './_dashboard/nuevoMovimiento';
+import { connection } from 'next/server';
 
 export default async function Home() {
+  await connection();
   const [resDashboard, resCuentas, resCategorias] = await Promise.all([
     fetch(process.env.API_URL + '/dashboard'),
     fetch(process.env.API_URL + '/cuentas'),

@@ -1,6 +1,7 @@
 import type { Categoria } from '@/components/props';
 import EliminarCategoria from './eliminarCategoria';
 import EditarCategoria from './editarCategoria';
+import { connection } from 'next/server';
 import NuevaCategoria from './nuevaCategoria';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -22,6 +23,7 @@ const SECCIONES = [
 ] as const;
 
 export default async function Categorias() {
+  await connection();
   const responseCategory = await fetch(process.env.API_URL + '/categorias');
   if (!responseCategory.ok) {
     throw new Error('Error al obtener las categorias');

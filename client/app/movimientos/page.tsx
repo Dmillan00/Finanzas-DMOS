@@ -4,6 +4,7 @@ import { ArrowLeftRight, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import EditarMovimiento from './editarMovimiento';
 import EliminarMovimiento from './eliminarMovimiento';
 import { Button } from '@/components/ui/button';
+import { connection } from 'next/server';
 import NuevoMovimiento from './nuevoMovimiento';
 import { cn } from '@/lib/utils';
 import {
@@ -41,6 +42,7 @@ export default async function Movimientos({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  await connection();
   const params = await searchParams;
 
   let year = Number(params.year);

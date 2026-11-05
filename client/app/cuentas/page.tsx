@@ -3,8 +3,10 @@ import EliminarCuenta from './eliminarCuenta';
 import EditarCuenta from './editarCuenta';
 import NuevaCuenta from './nuevaCuenta';
 import TarjetaCuenta from '@/components/tarjetaCuenta';
+import { connection } from 'next/server';
 
 export default async function Cuentas() {
+  await connection();
   const responseAccount = await fetch(process.env.API_URL + '/cuentas');
 
   if (!responseAccount.ok) {
