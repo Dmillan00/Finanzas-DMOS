@@ -26,17 +26,14 @@ export async function crearCategoria(
   let responseCategory: Response;
 
   try {
-    responseCategory = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + '/categorias',
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          nombre,
-          tipo,
-        }),
-      },
-    );
+    responseCategory = await fetch(process.env.API_URL + '/categorias', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        nombre,
+        tipo,
+      }),
+    });
   } catch (error) {
     console.error(error);
     return { ok: false, message: 'Servidor no disponible' };
@@ -83,16 +80,13 @@ export async function editarCategoria(
   let responseCategory: Response;
 
   try {
-    responseCategory = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + '/categorias/' + id,
-      {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          nombre,
-        }),
-      },
-    );
+    responseCategory = await fetch(process.env.API_URL + '/categorias/' + id, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        nombre,
+      }),
+    });
   } catch (error) {
     console.error(error);
     return { ok: false, message: 'Servidor no disponible' };
@@ -126,12 +120,9 @@ export async function eliminarCategoria(id: number) {
   let responseCategory: Response;
 
   try {
-    responseCategory = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + '/categorias/' + id,
-      {
-        method: 'DELETE',
-      },
-    );
+    responseCategory = await fetch(process.env.API_URL + '/categorias/' + id, {
+      method: 'DELETE',
+    });
   } catch (error) {
     console.error(error);
     return { ok: false, message: 'Servidor no disponible' };

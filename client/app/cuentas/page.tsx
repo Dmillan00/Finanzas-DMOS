@@ -5,9 +5,7 @@ import NuevaCuenta from './nuevaCuenta';
 import TarjetaCuenta from '@/components/tarjetaCuenta';
 
 export default async function Cuentas() {
-  const responseAccount = await fetch(
-    process.env.NEXT_PUBLIC_API_URL + '/cuentas',
-  );
+  const responseAccount = await fetch(process.env.API_URL + '/cuentas');
 
   if (!responseAccount.ok) {
     throw new Error('Error al obtener las cuentas');

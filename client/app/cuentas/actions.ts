@@ -34,17 +34,14 @@ export async function crearCuenta(
   let responseAccount: Response;
 
   try {
-    responseAccount = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + '/cuentas',
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          nombre,
-          saldoInicial: saldo,
-        }),
-      },
-    );
+    responseAccount = await fetch(process.env.API_URL + '/cuentas', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        nombre,
+        saldoInicial: saldo,
+      }),
+    });
   } catch (error) {
     console.error(error);
     return { ok: false, message: `Servidor no disponible` };
@@ -105,17 +102,14 @@ export async function editarCuenta(
   let responseAccount: Response;
 
   try {
-    responseAccount = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + '/cuentas/' + id,
-      {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          nombre,
-          saldoInicial: saldo,
-        }),
-      },
-    );
+    responseAccount = await fetch(process.env.API_URL + '/cuentas/' + id, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        nombre,
+        saldoInicial: saldo,
+      }),
+    });
   } catch (error) {
     console.error(error);
     return { ok: false, message: 'Servidor no disponible' };
@@ -149,12 +143,9 @@ export async function eliminarCuenta(id: number) {
   let responseAccount: Response;
 
   try {
-    responseAccount = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + '/cuentas/' + id,
-      {
-        method: 'DELETE',
-      },
-    );
+    responseAccount = await fetch(process.env.API_URL + '/cuentas/' + id, {
+      method: 'DELETE',
+    });
   } catch (error) {
     console.error(error);
     return { ok: false, message: 'Servidor no disponible' };

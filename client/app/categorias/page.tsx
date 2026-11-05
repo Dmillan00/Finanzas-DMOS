@@ -22,9 +22,7 @@ const SECCIONES = [
 ] as const;
 
 export default async function Categorias() {
-  const responseCategory = await fetch(
-    process.env.NEXT_PUBLIC_API_URL + '/categorias',
-  );
+  const responseCategory = await fetch(process.env.API_URL + '/categorias');
   if (!responseCategory.ok) {
     throw new Error('Error al obtener las categorias');
   }

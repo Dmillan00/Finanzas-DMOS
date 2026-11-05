@@ -6,9 +6,9 @@ import NuevoMovimiento from './_dashboard/nuevoMovimiento';
 
 export default async function Home() {
   const [resDashboard, resCuentas, resCategorias] = await Promise.all([
-    fetch(process.env.NEXT_PUBLIC_API_URL + '/dashboard'),
-    fetch(process.env.NEXT_PUBLIC_API_URL + '/cuentas'),
-    fetch(process.env.NEXT_PUBLIC_API_URL + '/categorias'),
+    fetch(process.env.API_URL + '/dashboard'),
+    fetch(process.env.API_URL + '/cuentas'),
+    fetch(process.env.API_URL + '/categorias'),
   ]);
 
   if (!resDashboard.ok || !resCuentas.ok || !resCategorias.ok) {

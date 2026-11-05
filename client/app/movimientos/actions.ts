@@ -92,14 +92,11 @@ export async function crearMovimiento(
   let responseMovement: Response;
 
   try {
-    responseMovement = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + '/movimientos',
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(baseDeMovimiento),
-      },
-    );
+    responseMovement = await fetch(process.env.API_URL + '/movimientos', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(baseDeMovimiento),
+    });
   } catch (error) {
     console.error(error);
     return { ok: false, message: 'Servidor no disponible' };
@@ -199,14 +196,11 @@ export async function editarMovimiento(
   let responseMovement: Response;
 
   try {
-    responseMovement = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + '/movimientos/' + id,
-      {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(BaseEditarMovimiento),
-      },
-    );
+    responseMovement = await fetch(process.env.API_URL + '/movimientos/' + id, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(BaseEditarMovimiento),
+    });
   } catch (error) {
     console.error(error);
     return { ok: false, message: 'Servidor no disponible' };
@@ -240,12 +234,9 @@ export async function eliminarMovimiento(id: number) {
   let responseMovement: Response;
 
   try {
-    responseMovement = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + '/movimientos/' + id,
-      {
-        method: 'DELETE',
-      },
-    );
+    responseMovement = await fetch(process.env.API_URL + '/movimientos/' + id, {
+      method: 'DELETE',
+    });
   } catch (error) {
     console.error(error);
     return { ok: false, message: 'Servidor no disponible' };

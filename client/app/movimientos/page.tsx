@@ -60,9 +60,9 @@ export default async function Movimientos({
   });
 
   const [resCuenta, resMovimientos, resCategorias] = await Promise.all([
-    fetch(process.env.NEXT_PUBLIC_API_URL + '/cuentas'),
-    fetch(process.env.NEXT_PUBLIC_API_URL + '/movimientos?' + query),
-    fetch(process.env.NEXT_PUBLIC_API_URL + '/categorias'),
+    fetch(process.env.API_URL + '/cuentas'),
+    fetch(process.env.API_URL + '/movimientos?' + query),
+    fetch(process.env.API_URL + '/categorias'),
   ]);
 
   if (!resCuenta.ok || !resMovimientos.ok || !resCategorias.ok) {
