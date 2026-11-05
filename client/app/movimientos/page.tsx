@@ -153,7 +153,7 @@ export default async function Movimientos({
           Sin movimientos en {selectMeses[month - 1].label} de {year}
         </p>
       ) : (
-        <div className="flex flex-col gap-6 mt-5">
+        <div className="flex flex-col stagger  gap-6 mt-5">
           {[...grupos].map(([dia, lista]) => (
             <section key={dia}>
               <p className="text-sm text-muted-foreground mb-2 first-letter:uppercase">

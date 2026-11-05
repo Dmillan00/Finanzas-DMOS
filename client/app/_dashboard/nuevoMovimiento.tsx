@@ -61,7 +61,7 @@ export default function NuevoMovimiento({
               key={boton.tipo}
               type="button"
               onClick={() => setTipo(boton.tipo)}
-              className="flex flex-col items-center gap-2 text-sm"
+              className="flex flex-col items-center gap-2 text-sm transition-transform duration-150 ease-(--ease-out) active:scale-[0.97]"
             >
               <span
                 className={cn(

@@ -35,7 +35,7 @@ export default async function Cuentas() {
         </p>
       ) : (
         <div className="flex flex-col gap-6 ">
-          <ul className="grid mt-5 gap-4 grid-cols-[repeat(auto-fill,minmax(250px,1fr))]">
+          <ul className="grid stagger  mt-5 gap-4  grid-cols-[repeat(auto-fill,minmax(250px,1fr))]">
             {cuentas.map((cuenta) => {
               return (
                 <li key={cuenta.cuentaId}>

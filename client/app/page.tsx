@@ -23,7 +23,7 @@ export default async function Home() {
     <main className="w-full max-w-7xl mx-auto px-5 py-2">
       <h1 className="text-3xl font-semibold text-primary">Dashboard</h1>
 
-      <div className="grid grid-cols-3 gap-4 mt-5">
+      <div className="stagger grid grid-cols-3 gap-4 mt-5">
         <CarruselCuentas cuentas={cuentas}></CarruselCuentas>
         <EsteMes periodo={dashboard.periodo} totales={dashboard.totales} />
         <NuevoMovimiento

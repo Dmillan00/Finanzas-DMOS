@@ -45,7 +45,7 @@ export default function CarruselCuentas({ cuentas }: { cuentas: Cuenta[] }) {
                 <li key={c.cuentaId}>
                   <span
                     className={cn(
-                      'block size-2 rounded-full',
+                      'block size-2 rounded-full transition-colors duration-200',
                       i === indice ? 'bg-white' : 'bg-white/40',
                     )}
                   ></span>
@@ -59,7 +59,7 @@ export default function CarruselCuentas({ cuentas }: { cuentas: Cuenta[] }) {
               onClick={anterior}
               className="group/zona absolute inset-y-0 left-0 w-1/2 cursor-pointer"
             >
-              <span className="absolute inset-0 flex items-center pl-2.5 bg-linear-to-r from-black/45 to-transparent to-60% opacity-0 transition-opacity group-hover/zona:opacity-100 group-focus-visible/zona:opacity-100"></span>
+              <span className="absolute inset-0 flex items-center pl-2.5 bg-linear-to-r from-black/45 to-transparent to-60% opacity-0 transition-opacity duration-150 ease-(--ease-out) group-hover/zona:opacity-100 group-focus-visible/zona:opacity-100"></span>
             </button>
 
             <button
@@ -68,7 +68,7 @@ export default function CarruselCuentas({ cuentas }: { cuentas: Cuenta[] }) {
               onClick={siguiente}
               className="group/zona absolute inset-y-0 right-0 w-1/2 cursor-pointer"
             >
-              <span className="absolute inset-0 flex items-center justify-end pr-2.5 bg-linear-to-l from-black/45 to-transparent to-60% opacity-0 transition-opacity group-hover/zona:opacity-100 group-focus-visible/zona:opacity-100"></span>
+              <span className="absolute inset-0 flex items-center justify-end pr-2.5 bg-linear-to-l from-black/45 to-transparent to-60% opacity-0 transition-opacity duration-150 ease-(--ease-out) group-hover/zona:opacity-100 group-focus-visible/zona:opacity-100"></span>
             </button>
           </>
         )}

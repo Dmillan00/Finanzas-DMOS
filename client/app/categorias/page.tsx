@@ -49,7 +49,7 @@ export default async function Categorias() {
           Sin categorías
         </p>
       ) : (
-        <div className="flex flex-col gap-6 mt-5">
+        <div className="flex flex-col stagger  gap-6 mt-5">
           {SECCIONES.map((seccion) => {
             const lista = categorias.filter(
               (categoria) => categoria.tipo === seccion.tipo,
