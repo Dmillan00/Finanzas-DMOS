@@ -66,7 +66,7 @@ export default function CuentaForm({
               type="number"
               step={0.01}
               id="saldoInicial"
-              defaultValue={cuenta?.saldoInicial}
+              defaultValue={cuenta?.saldoInicial ?? 0}
             />
           </Field>
 
