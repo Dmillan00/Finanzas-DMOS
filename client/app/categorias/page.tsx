@@ -65,7 +65,7 @@ export default async function Categorias() {
                     Sin categorías
                   </p>
                 ) : (
-                  <ul className="rounded-xl border divide-y">
+                  <ul className="rounded-xl border divide-y overflow-hidden">
                     {lista.map((categoria) => {
                       const estilo = ESTILO_TIPO[categoria.tipo];
                       const Icono = estilo.icono;
@@ -74,6 +74,7 @@ export default async function Categorias() {
                         <li
                           className="flex items-center gap-4 px-4 py-3"
                           key={categoria.categoriaId}
+                          style={{ backgroundColor: 'var(--card)' }}
                         >
                           <div
                             className={cn(

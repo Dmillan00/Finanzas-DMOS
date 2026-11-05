@@ -89,14 +89,21 @@ export async function crearMovimiento(
     baseDeMovimiento.cuentaDestinoId = destino;
   }
 
-  const responseMovement = await fetch(
-    process.env.NEXT_PUBLIC_API_URL + '/movimientos',
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(baseDeMovimiento),
-    },
-  );
+  let responseMovement: Response;
+
+  try {
+    responseMovement = await fetch(
+      process.env.NEXT_PUBLIC_API_URL + '/movimientos',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(baseDeMovimiento),
+      },
+    );
+  } catch (error) {
+    console.error(error);
+    return { ok: false, message: 'Servidor no disponible' };
+  }
 
   if (!responseMovement.ok) {
     const errorBody: unknown = await responseMovement.json().catch(() => null);
@@ -189,14 +196,21 @@ export async function editarMovimiento(
     BaseEditarMovimiento.cuentaDestinoId = destino;
   }
 
-  const responseMovement = await fetch(
-    process.env.NEXT_PUBLIC_API_URL + '/movimientos/' + id,
-    {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(BaseEditarMovimiento),
-    },
-  );
+  let responseMovement: Response;
+
+  try {
+    responseMovement = await fetch(
+      process.env.NEXT_PUBLIC_API_URL + '/movimientos/' + id,
+      {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(BaseEditarMovimiento),
+      },
+    );
+  } catch (error) {
+    console.error(error);
+    return { ok: false, message: 'Servidor no disponible' };
+  }
 
   if (!responseMovement.ok) {
     const errorBody: unknown = await responseMovement.json().catch(() => null);
@@ -223,12 +237,19 @@ export async function editarMovimiento(
 }
 
 export async function eliminarMovimiento(id: number) {
-  const responseMovement = await fetch(
-    process.env.NEXT_PUBLIC_API_URL + '/movimientos/' + id,
-    {
-      method: 'DELETE',
-    },
-  );
+  let responseMovement: Response;
+
+  try {
+    responseMovement = await fetch(
+      process.env.NEXT_PUBLIC_API_URL + '/movimientos/' + id,
+      {
+        method: 'DELETE',
+      },
+    );
+  } catch (error) {
+    console.error(error);
+    return { ok: false, message: 'Servidor no disponible' };
+  }
 
   if (!responseMovement.ok) {
     const errorBody: unknown = await responseMovement.json().catch(() => null);

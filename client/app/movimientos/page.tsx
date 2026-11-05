@@ -159,7 +159,7 @@ export default async function Movimientos({
               <p className="text-sm text-muted-foreground mb-2 first-letter:uppercase">
                 {dia}
               </p>
-              <ul className="rounded-xl border divide-y">
+              <ul className="rounded-xl border divide-y overflow-hidden">
                 {lista.map((movimiento) => {
                   const partes =
                     movimiento.tipo === 'TRANSFERENCIA'
@@ -188,6 +188,7 @@ export default async function Movimientos({
                     <li
                       className="flex items-center gap-4 px-4 py-3"
                       key={movimiento.movimientoId}
+                      style={{ backgroundColor: 'var(--card)' }}
                     >
                       <div
                         className={cn(

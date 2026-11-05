@@ -31,20 +31,41 @@ export async function crearCuenta(
     return { ok: false, message: 'Saldo no valido' };
   }
 
-  const responseAccount = await fetch(
-    process.env.NEXT_PUBLIC_API_URL + '/cuentas',
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        nombre,
-        saldoInicial: saldo,
-      }),
-    },
-  );
+  let responseAccount: Response;
+
+  try {
+    responseAccount = await fetch(
+      process.env.NEXT_PUBLIC_API_URL + '/cuentas',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          nombre,
+          saldoInicial: saldo,
+        }),
+      },
+    );
+  } catch (error) {
+    console.error(error);
+    return { ok: false, message: `Servidor no disponible` };
+  }
 
   if (!responseAccount.ok) {
-    return { ok: false, message: 'Error al crear la cuenta' };
+    const errorBody: unknown = await responseAccount.json().catch(() => null);
+
+    let message = 'Error al crear la cuenta';
+
+    if (typeof errorBody === 'object' && errorBody !== null) {
+      const backMessage = (errorBody as { message?: unknown }).message;
+
+      if (typeof backMessage === 'string') {
+        message = backMessage;
+      } else if (Array.isArray(backMessage)) {
+        message = backMessage.join(', ');
+      }
+    }
+
+    return { ok: false, message };
   } else {
     revalidatePath('/movimientos');
     revalidatePath('/cuentas');
@@ -81,17 +102,24 @@ export async function editarCuenta(
     return { ok: false, message: 'Saldo no valido' };
   }
 
-  const responseAccount = await fetch(
-    process.env.NEXT_PUBLIC_API_URL + '/cuentas/' + id,
-    {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        nombre,
-        saldoInicial: saldo,
-      }),
-    },
-  );
+  let responseAccount: Response;
+
+  try {
+    responseAccount = await fetch(
+      process.env.NEXT_PUBLIC_API_URL + '/cuentas/' + id,
+      {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          nombre,
+          saldoInicial: saldo,
+        }),
+      },
+    );
+  } catch (error) {
+    console.error(error);
+    return { ok: false, message: 'Servidor no disponible' };
+  }
 
   if (!responseAccount.ok) {
     const errorBody: unknown = await responseAccount.json().catch(() => null);
@@ -118,12 +146,19 @@ export async function editarCuenta(
 }
 
 export async function eliminarCuenta(id: number) {
-  const responseAccount = await fetch(
-    process.env.NEXT_PUBLIC_API_URL + '/cuentas/' + id,
-    {
-      method: 'DELETE',
-    },
-  );
+  let responseAccount: Response;
+
+  try {
+    responseAccount = await fetch(
+      process.env.NEXT_PUBLIC_API_URL + '/cuentas/' + id,
+      {
+        method: 'DELETE',
+      },
+    );
+  } catch (error) {
+    console.error(error);
+    return { ok: false, message: 'Servidor no disponible' };
+  }
 
   if (!responseAccount.ok) {
     const errorBody: unknown = await responseAccount.json().catch(() => null);
