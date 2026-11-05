@@ -1,9 +1,42 @@
 'use client';
 
 import type { Categoria, Cuenta, Tipo } from '@/components/props';
-import Modal from '@/components/modal';
 import { useState } from 'react';
 import MovimientoForm from '../movimientos/movimientoForm';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ArrowDownRight, ArrowLeftRight, ArrowUpRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const BOTONES: {
+  tipo: Tipo;
+  label: string;
+  icono: typeof ArrowUpRight;
+  clases: string;
+}[] = [
+  {
+    tipo: 'INGRESO',
+    label: 'Ingreso',
+    icono: ArrowUpRight,
+    clases: 'bg-green-400',
+  },
+  {
+    tipo: 'GASTO',
+    label: 'Gasto',
+    icono: ArrowDownRight,
+    clases: 'bg-red-400',
+  },
+  {
+    tipo: 'TRANSFERENCIA',
+    label: 'Transferir',
+    icono: ArrowLeftRight,
+    clases: 'bg-primary',
+  },
+];
 
 export default function NuevoMovimiento({
   cuentas,
@@ -15,21 +48,47 @@ export default function NuevoMovimiento({
   const [tipo, setTipo] = useState<Tipo | null>(null);
 
   return (
-    <section>
-      <h2>Nuevo movimiento</h2>
+    <section className="flex flex-col gap-3 border-l pl-5 min-w-0">
+      <h2 className="text-xs uppercase tracking-wider text-muted-foreground">
+        Nuevo movimiento
+      </h2>
 
-      <div>
-        <button type="button" onClick={() => setTipo('INGRESO')}>
-          Ingreso
-        </button>
-        <button type="button" onClick={() => setTipo('GASTO')}>
-          Gasto
-        </button>
-        <button type="button" onClick={() => setTipo('TRANSFERENCIA')}>
-          Transferir
-        </button>
+      <div className="flex-1 flex items-center justify-around">
+        {BOTONES.map((boton) => {
+          const Icono = boton.icono;
+          return (
+            <button
+              key={boton.tipo}
+              type="button"
+              onClick={() => setTipo(boton.tipo)}
+              className="flex flex-col items-center gap-2 text-sm"
+            >
+              <span
+                className={cn(
+                  'size-15 rounded-full text-primary-foreground flex items-center justify-center',
+                  boton.clases,
+                )}
+              >
+                <Icono />
+              </span>
+              {boton.label}
+            </button>
+          );
+        })}
+      </div>
 
-        <Modal abierto={tipo !== null} onClose={() => setTipo(null)}>
+      <Dialog
+        open={tipo !== null}
+        onOpenChange={(abierto) => {
+          if (!abierto) {
+            setTipo(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nuevo Movimiento</DialogTitle>
+          </DialogHeader>
           {tipo && (
             <MovimientoForm
               cuentas={cuentas}
@@ -38,11 +97,8 @@ export default function NuevoMovimiento({
               onExito={() => setTipo(null)}
             />
           )}
-          <button type="button" onClick={() => setTipo(null)}>
-            Cerrar
-          </button>
-        </Modal>
-      </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

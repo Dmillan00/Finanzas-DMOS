@@ -20,17 +20,22 @@ export default async function Home() {
   const categorias: Categoria[] = await resCategorias.json();
 
   return (
-    <main>
-      <h1>Dashboard</h1>
+    <main className="w-full max-w-7xl mx-auto px-5 py-2">
+      <h1 className="text-3xl font-semibold text-primary">Dashboard</h1>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4 mt-5">
         <CarruselCuentas cuentas={cuentas}></CarruselCuentas>
         <EsteMes periodo={dashboard.periodo} totales={dashboard.totales} />
         <NuevoMovimiento
           categorias={categorias}
           cuentas={cuentas}
         ></NuevoMovimiento>
-        <section className="col-span-2">Grafico (todo)</section>
+        <section className="col-span-2 flex flex-col gap-3 min-w-0">
+          <h2 className="text-sm text-muted-foreground">Gráfico</h2>
+          <div className="flex-1 min-h-75 bg-card border border-dashed rounded-xl flex items-center justify-center text-muted-foreground">
+            ToDo
+          </div>
+        </section>
         <UltimosMovimientos ultimos={dashboard.ultimos} />
       </div>
     </main>
