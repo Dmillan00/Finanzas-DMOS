@@ -24,9 +24,9 @@ services:
     env_file:
       - ./server/.env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB_MAIN}
     ports:
-      - "8010:8010"
+      - "${SERVER_PORT_MAIN}:8010"
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,7 +38,7 @@ services:
     environment:
       API_URL: http://server:8010
     ports:
-      - "8012:8012"
+      - "${CLIENT_PORT_MAIN}:8012"
     depends_on:
       - server
 
