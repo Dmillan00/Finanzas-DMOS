@@ -8,6 +8,7 @@ import {
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 const enlaces: { href: string; label: string }[] = [
   {
     href: '/',
@@ -30,13 +31,33 @@ const enlaces: { href: string; label: string }[] = [
   },
 ];
 
-export default function Navbar() {
+function estiloBd(bd: string | null) {
+  if (bd === null) {
+    return { texto: 'BD ?', variant: 'destructive' as const };
+  }
+  if (bd === 'finanzas_main') {
+    return { texto: bd, variant: 'secondary' as const };
+  }
+  return {
+    texto: 'PRUEBA · ' + bd,
+    variant: 'outline' as const,
+    clases: 'border-amber-500/40 text-amber-400',
+  };
+}
+
+export default function Navbar({ bd }: { bd: string | null }) {
   const path = usePathname();
   const indice = enlaces.findIndex((item) => item.href === path);
-
+  const { texto, variant, clases } = estiloBd(bd);
   return (
     <header className="flex items-center mx-auto w-full justify-between px-5 py-2 max-w-7xl">
-      <h2 className="text-2xl">Finanzas DMOS</h2>
+      <div className="flex items-center gap-3">
+        <h2 className="text-2xl">Finanzas DMOS</h2>
+        <Badge variant={variant} className={clases}>
+          {texto}
+        </Badge>
+      </div>
+
       <NavigationMenu>
         <NavigationMenuList className="relative rounded-full border p-1">
           <li
