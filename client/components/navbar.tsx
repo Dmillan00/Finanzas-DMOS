@@ -36,10 +36,10 @@ function estiloBd(bd: string | null) {
     return { texto: 'BD ?', variant: 'destructive' as const };
   }
   if (bd === 'finanzas_main') {
-    return { texto: bd, variant: 'secondary' as const };
+    return { texto: 'main', variant: 'secondary' as const };
   }
   return {
-    texto: 'PRUEBA · ' + bd,
+    texto: 'dev',
     variant: 'outline' as const,
     clases: 'border-amber-500/40 text-amber-400',
   };
