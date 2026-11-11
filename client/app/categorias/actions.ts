@@ -1,8 +1,8 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
-
-type EstadoForm = { ok: boolean; message: string };
+import type { EstadoForm } from '@/libs/helper';
+import { apiPeticiones } from '@/libs/helper';
+const routes = ['/movimientos', '/categorias', '/'];
 
 export async function crearCategoria(
   estadoPrevio: EstadoForm,
@@ -23,43 +23,17 @@ export async function crearCategoria(
     return { ok: false, message: 'El tipado no es correcto' };
   }
 
-  let responseCategory: Response;
-
-  try {
-    responseCategory = await fetch(process.env.API_URL + '/categorias', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        nombre,
-        tipo,
-      }),
-    });
-  } catch (error) {
-    console.error(error);
-    return { ok: false, message: 'Servidor no disponible' };
-  }
-  if (!responseCategory.ok) {
-    const errorBody: unknown = await responseCategory.json().catch(() => null);
-
-    let message = 'Error al crear la categoria';
-
-    if (typeof errorBody === 'object' && errorBody !== null) {
-      const backMessage = (errorBody as { message?: unknown }).message;
-
-      if (typeof backMessage === 'string') {
-        message = backMessage;
-      } else if (Array.isArray(backMessage)) {
-        message = backMessage.join(', ');
-      }
-    }
-
-    return { ok: false, message };
-  } else {
-    revalidatePath('/movimientos');
-    revalidatePath('/categorias');
-    revalidatePath('/');
-    return { ok: true, message: 'Categoria creada con exito!' };
-  }
+  return apiPeticiones({
+    route: '/categorias',
+    method: 'POST',
+    body: {
+      nombre,
+      tipo,
+    },
+    okMsj: 'Categoria creada con exito',
+    errorMsj: 'Error al crear la categoria',
+    revalidate: routes,
+  });
 }
 
 export async function editarCategoria(
@@ -76,78 +50,24 @@ export async function editarCategoria(
   if (nombre.trim() === '') {
     return { ok: false, message: 'El nombre no puede estar vacio' };
   }
-
-  let responseCategory: Response;
-
-  try {
-    responseCategory = await fetch(process.env.API_URL + '/categorias/' + id, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        nombre,
-      }),
-    });
-  } catch (error) {
-    console.error(error);
-    return { ok: false, message: 'Servidor no disponible' };
-  }
-
-  if (!responseCategory.ok) {
-    const errorBody: unknown = await responseCategory.json().catch(() => null);
-
-    let message = 'Error al editar la categoria';
-
-    if (typeof errorBody === 'object' && errorBody !== null) {
-      const backMessage = (errorBody as { message?: unknown }).message;
-
-      if (typeof backMessage === 'string') {
-        message = backMessage;
-      } else if (Array.isArray(backMessage)) {
-        message = backMessage.join(', ');
-      }
-    }
-
-    return { ok: false, message };
-  } else {
-    revalidatePath('/movimientos');
-    revalidatePath('/categorias');
-    revalidatePath('/');
-    return { ok: true, message: 'Categoria editada con exito!' };
-  }
+  return apiPeticiones({
+    route: '/categorias/' + id,
+    method: 'PATCH',
+    body: {
+      nombre,
+    },
+    okMsj: 'Categoria editada con exito',
+    errorMsj: 'Error al editar la categoria',
+    revalidate: routes,
+  });
 }
 
-export async function eliminarCategoria(id: number) {
-  let responseCategory: Response;
-
-  try {
-    responseCategory = await fetch(process.env.API_URL + '/categorias/' + id, {
-      method: 'DELETE',
-    });
-  } catch (error) {
-    console.error(error);
-    return { ok: false, message: 'Servidor no disponible' };
-  }
-
-  if (!responseCategory.ok) {
-    const errorBody: unknown = await responseCategory.json().catch(() => null);
-
-    let message = 'Error al eliminar la categoria';
-
-    if (typeof errorBody === 'object' && errorBody !== null) {
-      const backMessage = (errorBody as { message?: unknown }).message;
-
-      if (typeof backMessage === 'string') {
-        message = backMessage;
-      } else if (Array.isArray(backMessage)) {
-        message = backMessage.join(', ');
-      }
-    }
-
-    return { ok: false, message };
-  } else {
-    revalidatePath('/movimientos');
-    revalidatePath('/categorias');
-    revalidatePath('/');
-    return { ok: true, message: 'Categoria eliminada con exito!' };
-  }
+export async function eliminarCategoria(id: number): Promise<EstadoForm> {
+  return apiPeticiones({
+    route: '/categorias/' + id,
+    method: 'DELETE',
+    okMsj: 'Categoria eliminada con exito',
+    errorMsj: 'Error al eliminar la categoria',
+    revalidate: routes,
+  });
 }

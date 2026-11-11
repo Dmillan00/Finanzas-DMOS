@@ -1,8 +1,8 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
-
-type EstadoForm = { ok: boolean; message: string };
+import { apiPeticiones } from '@/libs/helper';
+import type { EstadoForm } from '@/libs/helper';
+const routes = ['/movimientos', '/cuentas', '/'];
 
 type BodyEditar = Omit<BodyMovimiento, 'tipo' | 'nota'> & {
   nota?: string | null;
@@ -89,41 +89,14 @@ export async function crearMovimiento(
     baseDeMovimiento.cuentaDestinoId = destino;
   }
 
-  let responseMovement: Response;
-
-  try {
-    responseMovement = await fetch(process.env.API_URL + '/movimientos', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(baseDeMovimiento),
-    });
-  } catch (error) {
-    console.error(error);
-    return { ok: false, message: 'Servidor no disponible' };
-  }
-
-  if (!responseMovement.ok) {
-    const errorBody: unknown = await responseMovement.json().catch(() => null);
-
-    let message = 'Error al crear el movimiento';
-
-    if (typeof errorBody === 'object' && errorBody !== null) {
-      const backMessage = (errorBody as { message?: unknown }).message;
-
-      if (typeof backMessage === 'string') {
-        message = backMessage;
-      } else if (Array.isArray(backMessage)) {
-        message = backMessage.join(', ');
-      }
-    }
-
-    return { ok: false, message };
-  } else {
-    revalidatePath('/movimientos');
-    revalidatePath('/cuentas');
-    revalidatePath('/');
-    return { ok: true, message: 'Movimiento creado con éxito!' };
-  }
+  return apiPeticiones({
+    route: '/movimientos',
+    method: 'POST',
+    body: baseDeMovimiento,
+    okMsj: 'Movimiento creado con exito',
+    errorMsj: 'Error al crear el movimiento',
+    revalidate: routes,
+  });
 }
 
 export async function editarMovimiento(
@@ -193,75 +166,22 @@ export async function editarMovimiento(
     BaseEditarMovimiento.cuentaDestinoId = destino;
   }
 
-  let responseMovement: Response;
-
-  try {
-    responseMovement = await fetch(process.env.API_URL + '/movimientos/' + id, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(BaseEditarMovimiento),
-    });
-  } catch (error) {
-    console.error(error);
-    return { ok: false, message: 'Servidor no disponible' };
-  }
-
-  if (!responseMovement.ok) {
-    const errorBody: unknown = await responseMovement.json().catch(() => null);
-
-    let message = 'Error al editar el movimiento';
-
-    if (typeof errorBody === 'object' && errorBody !== null) {
-      const backMessage = (errorBody as { message?: unknown }).message;
-
-      if (typeof backMessage === 'string') {
-        message = backMessage;
-      } else if (Array.isArray(backMessage)) {
-        message = backMessage.join(', ');
-      }
-    }
-
-    return { ok: false, message };
-  } else {
-    revalidatePath('/movimientos');
-    revalidatePath('/cuentas');
-    revalidatePath('/');
-    return { ok: true, message: 'Movimiento editado con éxito!' };
-  }
+  return apiPeticiones({
+    route: '/movimientos/' + id,
+    method: 'PATCH',
+    body: BaseEditarMovimiento,
+    okMsj: 'Movimiento editado con exito',
+    errorMsj: 'Error al editar el movimiento',
+    revalidate: routes,
+  });
 }
 
-export async function eliminarMovimiento(id: number) {
-  let responseMovement: Response;
-
-  try {
-    responseMovement = await fetch(process.env.API_URL + '/movimientos/' + id, {
-      method: 'DELETE',
-    });
-  } catch (error) {
-    console.error(error);
-    return { ok: false, message: 'Servidor no disponible' };
-  }
-
-  if (!responseMovement.ok) {
-    const errorBody: unknown = await responseMovement.json().catch(() => null);
-
-    let message = 'Error al eliminar el movimiento';
-
-    if (typeof errorBody === 'object' && errorBody !== null) {
-      const backMessage = (errorBody as { message?: unknown }).message;
-
-      if (typeof backMessage === 'string') {
-        message = backMessage;
-      } else if (Array.isArray(backMessage)) {
-        message = backMessage.join(', ');
-      }
-    }
-
-    return { ok: false, message };
-  } else {
-    revalidatePath('/movimientos');
-    revalidatePath('/cuentas');
-    revalidatePath('/');
-    return { ok: true, message: 'Movimiento eliminado con éxito!' };
-  }
+export async function eliminarMovimiento(id: number): Promise<EstadoForm> {
+  return apiPeticiones({
+    route: '/movimientos/' + id,
+    method: 'DELETE',
+    okMsj: 'Movimiento eliminado con exito',
+    errorMsj: 'Error al eliminar el movimiento',
+    revalidate: routes,
+  });
 }
