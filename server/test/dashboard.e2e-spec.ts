@@ -73,6 +73,10 @@ describe('Dashboard (e2e)', () => {
         queda: expect.any(String),
       },
       ultimos: expect.any(Array),
+      gastosPorCategoria: {
+        periodo: expect.any(Array),
+        anio: expect.any(Array),
+      },
     });
     expect(res.body.ultimos.length).toBeLessThanOrEqual(5);
   });
@@ -158,5 +162,62 @@ describe('Dashboard (e2e)', () => {
       .expect(200);
 
     expect(despues.body.totales.gastos).toBe(antes.body.totales.gastos);
+  });
+
+  it('GET /dashboard devuelve gastosPorCategoria con el límite en el periodo y sin él en el año', async () => {
+    await prisma.categoria.update({
+      where: { categoriaId: categoriaGastoId },
+      data: { limite: 100 },
+    });
+
+    const res = await request(app.getHttpServer())
+      .get('/dashboard')
+      .expect(200);
+
+    const claves = [
+      'categoriaId',
+      'dentro',
+      'exceso',
+      'importe',
+      'limite',
+      'nombre',
+      'porcentaje',
+      'restante',
+    ];
+    type Item = { categoriaId: number; [clave: string]: unknown };
+    const { periodo, anio } = res.body.gastosPorCategoria as {
+      periodo: Item[];
+      anio: Item[];
+    };
+
+    // Todas las categorías traen siempre los 8 campos (null si no aplica)
+    for (const item of [...periodo, ...anio]) {
+      expect(Object.keys(item).sort()).toEqual(claves);
+    }
+
+    const enPeriodo = periodo.find((c) => c.categoriaId === categoriaGastoId);
+    expect(enPeriodo).toMatchObject({
+      limite: '100',
+      importe: expect.any(String),
+      dentro: expect.any(String),
+      restante: expect.any(String),
+      exceso: expect.any(String),
+      porcentaje: expect.any(String),
+    });
+
+    const enAnio = anio.find((c) => c.categoriaId === categoriaGastoId);
+    expect(enAnio).toMatchObject({
+      importe: expect.any(String),
+      limite: null,
+      dentro: null,
+      restante: null,
+      exceso: null,
+      porcentaje: null,
+    });
+
+    // Las categorías de INGRESO no aparecen
+    expect(periodo.some((c) => c.categoriaId === categoriaIngresoId)).toBe(
+      false,
+    );
   });
 });

@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CategoriasService } from './categorias.service.js';
+import { UpdateCategoriaDto } from './dto/update-categoria.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { TipoMovimientoCategoria } from '../generated/prisma/enums.js';
@@ -273,6 +274,99 @@ describe('CategoriasService', () => {
       await expect(service.deleteCategoria(1)).rejects.toThrow(
         ConflictException,
       );
+    });
+  });
+
+  describe('límite', () => {
+    it('crea una categoría de GASTO con límite', async () => {
+      const dto = {
+        nombre: 'Ocio',
+        tipo: TipoMovimientoCategoria.GASTO,
+        limite: 150,
+      };
+      prismaServiceMock.categoria.create.mockResolvedValue({
+        categoriaId: 1,
+        ...dto,
+      });
+
+      await service.createCategoria(dto);
+
+      expect(prismaServiceMock.categoria.create).toHaveBeenCalledWith({
+        data: dto,
+      });
+    });
+
+    it('lanza BadRequestException al crear una categoría de INGRESO con límite', async () => {
+      await expect(
+        service.createCategoria({
+          nombre: 'Nomina',
+          tipo: TipoMovimientoCategoria.INGRESO,
+          limite: 150,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaServiceMock.categoria.create).not.toHaveBeenCalled();
+    });
+
+    it('quita el límite con limite: null sin consultar el tipo', async () => {
+      prismaServiceMock.categoria.update.mockResolvedValue({
+        categoriaId: 1,
+        limite: null,
+      });
+
+      // El DTO tipa limite como number, pero en ejecución llega null
+      // (@IsOptional lo deja pasar): así se quita el límite.
+      await service.updateCategoria(1, {
+        limite: null,
+      } as unknown as UpdateCategoriaDto);
+
+      expect(prismaServiceMock.categoria.findUnique).not.toHaveBeenCalled();
+      expect(prismaServiceMock.categoria.update).toHaveBeenCalledWith({
+        where: { categoriaId: 1 },
+        data: { limite: null },
+      });
+    });
+
+    it('actualiza el límite de una categoría de GASTO', async () => {
+      prismaServiceMock.categoria.findUnique.mockResolvedValue({
+        categoriaId: 1,
+        nombre: 'Ocio',
+        tipo: TipoMovimientoCategoria.GASTO,
+      });
+      prismaServiceMock.categoria.update.mockResolvedValue({
+        categoriaId: 1,
+        limite: 200,
+      });
+
+      await service.updateCategoria(1, { limite: 200 });
+
+      expect(prismaServiceMock.categoria.update).toHaveBeenCalledWith({
+        where: { categoriaId: 1 },
+        data: { limite: 200 },
+      });
+    });
+
+    it('lanza BadRequestException al poner límite a una categoría de INGRESO', async () => {
+      prismaServiceMock.categoria.findUnique.mockResolvedValue({
+        categoriaId: 2,
+        nombre: 'Nomina',
+        tipo: TipoMovimientoCategoria.INGRESO,
+      });
+
+      await expect(service.updateCategoria(2, { limite: 200 })).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prismaServiceMock.categoria.update).not.toHaveBeenCalled();
+    });
+
+    it('lanza NotFoundException al poner límite a una categoría que no existe', async () => {
+      prismaServiceMock.categoria.findUnique.mockResolvedValue(null);
+      prismaServiceMock.categoria.update.mockRejectedValue(
+        prismaError('P2025'),
+      );
+
+      await expect(
+        service.updateCategoria(99, { limite: 200 }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

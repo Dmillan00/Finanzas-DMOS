@@ -33,6 +33,7 @@ model Categoria {
   categoriaId Int                     @id @default(autoincrement())
   nombre      String
   tipo        TipoMovimientoCategoria
+  limite Decimal?  @db.Decimal(10, 2)
   movimientos Movimiento[]            @relation("categoria")
 
   @@unique([nombre, tipo])

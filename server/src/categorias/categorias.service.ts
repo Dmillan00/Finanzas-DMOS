@@ -30,6 +30,14 @@ export class CategoriasService {
   async createCategoria(data: CreateCategoriaDto) {
     const nombreLimpio = this.normalizarNombre(data.nombre);
 
+    if (data.limite !== undefined && data.limite !== null) {
+      if (data.tipo === TipoMovimientoCategoria.INGRESO) {
+        throw new BadRequestException(
+          `Solo las categorías de gasto pueden tener límite`,
+        );
+      }
+    }
+
     try {
       return await this.prisma.categoria.create({
         data: {
@@ -77,6 +85,16 @@ export class CategoriasService {
       throw new BadRequestException('El nombre no puede ser null');
     }
 
+    if (data.limite !== undefined && data.limite !== null) {
+      const cat = await this.prisma.categoria.findUnique({
+        where: { categoriaId: id },
+      });
+      if (cat?.tipo === TipoMovimientoCategoria.INGRESO) {
+        throw new BadRequestException(
+          'Solo las categorías de gasto pueden tener límite',
+        );
+      }
+    }
     const datosFinales: Prisma.CategoriaUpdateInput =
       data.nombre !== undefined
         ? { ...data, nombre: this.normalizarNombre(data.nombre) }
