@@ -1,8 +1,9 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { apiPeticiones } from '@/libs/helper';
+import type { EstadoForm } from '@/libs/helper';
 
-type EstadoForm = { ok: boolean; message: string };
+const routes = ['/movimientos', '/cuentas', '/'];
 
 export async function crearCuenta(
   estadoPrevio: EstadoForm,
@@ -31,44 +32,17 @@ export async function crearCuenta(
     return { ok: false, message: 'Saldo no valido' };
   }
 
-  let responseAccount: Response;
-
-  try {
-    responseAccount = await fetch(process.env.API_URL + '/cuentas', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        nombre,
-        saldoInicial: saldo,
-      }),
-    });
-  } catch (error) {
-    console.error(error);
-    return { ok: false, message: `Servidor no disponible` };
-  }
-
-  if (!responseAccount.ok) {
-    const errorBody: unknown = await responseAccount.json().catch(() => null);
-
-    let message = 'Error al crear la cuenta';
-
-    if (typeof errorBody === 'object' && errorBody !== null) {
-      const backMessage = (errorBody as { message?: unknown }).message;
-
-      if (typeof backMessage === 'string') {
-        message = backMessage;
-      } else if (Array.isArray(backMessage)) {
-        message = backMessage.join(', ');
-      }
-    }
-
-    return { ok: false, message };
-  } else {
-    revalidatePath('/movimientos');
-    revalidatePath('/cuentas');
-    revalidatePath('/');
-    return { ok: true, message: 'Cuenta creada con exito!' };
-  }
+  return apiPeticiones({
+    route: '/cuentas',
+    method: 'POST',
+    body: {
+      nombre,
+      saldoInicial: saldo,
+    },
+    okMsj: 'Cuenta creada con exito',
+    errorMsj: 'Error al crear la cuenta',
+    revalidate: routes,
+  });
 }
 
 export async function editarCuenta(
@@ -99,78 +73,22 @@ export async function editarCuenta(
     return { ok: false, message: 'Saldo no valido' };
   }
 
-  let responseAccount: Response;
-
-  try {
-    responseAccount = await fetch(process.env.API_URL + '/cuentas/' + id, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        nombre,
-        saldoInicial: saldo,
-      }),
-    });
-  } catch (error) {
-    console.error(error);
-    return { ok: false, message: 'Servidor no disponible' };
-  }
-
-  if (!responseAccount.ok) {
-    const errorBody: unknown = await responseAccount.json().catch(() => null);
-
-    let message = 'Error al editar la cuenta';
-
-    if (typeof errorBody === 'object' && errorBody !== null) {
-      const backMessage = (errorBody as { message?: unknown }).message;
-
-      if (typeof backMessage === 'string') {
-        message = backMessage;
-      } else if (Array.isArray(backMessage)) {
-        message = backMessage.join(', ');
-      }
-    }
-
-    return { ok: false, message };
-  } else {
-    revalidatePath('/movimientos');
-    revalidatePath('/cuentas');
-    revalidatePath('/');
-    return { ok: true, message: 'Cuenta editada con exito!' };
-  }
+  return apiPeticiones({
+    route: '/cuentas/' + id,
+    method: 'PATCH',
+    body: { nombre, saldoInicial: saldo },
+    okMsj: 'Cuenta editada con exito',
+    errorMsj: 'Error al editar la cuenta',
+    revalidate: routes,
+  });
 }
 
-export async function eliminarCuenta(id: number) {
-  let responseAccount: Response;
-
-  try {
-    responseAccount = await fetch(process.env.API_URL + '/cuentas/' + id, {
-      method: 'DELETE',
-    });
-  } catch (error) {
-    console.error(error);
-    return { ok: false, message: 'Servidor no disponible' };
-  }
-
-  if (!responseAccount.ok) {
-    const errorBody: unknown = await responseAccount.json().catch(() => null);
-
-    let message = 'Error al eliminar la cuenta';
-
-    if (typeof errorBody === 'object' && errorBody !== null) {
-      const backMessage = (errorBody as { message?: unknown }).message;
-
-      if (typeof backMessage === 'string') {
-        message = backMessage;
-      } else if (Array.isArray(backMessage)) {
-        message = backMessage.join(', ');
-      }
-    }
-
-    return { ok: false, message };
-  } else {
-    revalidatePath('/movimientos');
-    revalidatePath('/cuentas');
-    revalidatePath('/');
-    return { ok: true, message: 'Cuenta eliminada con exito!' };
-  }
+export async function eliminarCuenta(id: number): Promise<EstadoForm> {
+  return apiPeticiones({
+    route: '/cuentas/' + id,
+    method: 'DELETE',
+    okMsj: 'Cuenta eliminada con exito',
+    errorMsj: 'Error al eliminar la cuenta',
+    revalidate: routes,
+  });
 }
