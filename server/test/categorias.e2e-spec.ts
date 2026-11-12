@@ -178,6 +178,61 @@ describe('categorias (e2e)', () => {
       .expect(404);
   });
 
+  it('PATCH /categorias/:id pone límite a una categoría de GASTO', async () => {
+    const res = await request(app.getHttpServer())
+      .patch(`/categorias/${categoriaCreadaId}`)
+      .send({ limite: 150 })
+      .expect(200);
+
+    // Decimal llega como string
+    expect(Number(res.body.limite)).toBe(150);
+  });
+
+  it('PATCH /categorias/:id quita el límite con limite: null', async () => {
+    const res = await request(app.getHttpServer())
+      .patch(`/categorias/${categoriaCreadaId}`)
+      .send({ limite: null })
+      .expect(200);
+
+    expect(res.body.limite).toBeNull();
+  });
+
+  it('PATCH /categorias/:id falla con 400 si pone límite a una de INGRESO', async () => {
+    await request(app.getHttpServer())
+      .patch(`/categorias/${categoriaIngresoId}`)
+      .send({ limite: 150 })
+      .expect(400);
+  });
+
+  it('POST /categorias falla con 400 si una de INGRESO lleva límite', async () => {
+    await request(app.getHttpServer())
+      .post('/categorias')
+      .send({
+        nombre: `Ingreso limite ${SUFIJO}`,
+        tipo: 'INGRESO',
+        limite: 150,
+      })
+      .expect(400);
+  });
+
+  it('POST /categorias falla con 400 si el límite es negativo', async () => {
+    await request(app.getHttpServer())
+      .post('/categorias')
+      .send({ nombre: `Limite negativo ${SUFIJO}`, tipo: 'GASTO', limite: -10 })
+      .expect(400);
+  });
+
+  it('POST /categorias falla con 400 si el límite tiene más de 2 decimales', async () => {
+    await request(app.getHttpServer())
+      .post('/categorias')
+      .send({
+        nombre: `Limite decimales ${SUFIJO}`,
+        tipo: 'GASTO',
+        limite: 1.234,
+      })
+      .expect(400);
+  });
+
   it('DELETE /categorias/:id devuelve 404 si no existe', async () => {
     await request(app.getHttpServer()).delete('/categorias/999999').expect(404);
   });

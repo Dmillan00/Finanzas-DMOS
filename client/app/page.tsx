@@ -3,6 +3,7 @@ import EsteMes from './_dashboard/esteMes';
 import UltimosMovimientos from './_dashboard/ultimosMovimientos';
 import CarruselCuentas from './_dashboard/carruselCuentas';
 import NuevoMovimiento from './_dashboard/nuevoMovimiento';
+import GraficoGastos from './_dashboard/graficoGastos';
 import { connection } from 'next/server';
 
 export default async function Home() {
@@ -25,7 +26,7 @@ export default async function Home() {
     <main className="w-full max-w-7xl mx-auto px-5 py-2">
       <h1 className="text-3xl font-semibold text-primary">Dashboard</h1>
 
-      <div className="stagger grid grid-cols-3 gap-4 mt-5">
+      <div className="stagger grid grid-cols-3 gap-x-4 gap-y-6 mt-5">
         <CarruselCuentas cuentas={cuentas}></CarruselCuentas>
         <EsteMes periodo={dashboard.periodo} totales={dashboard.totales} />
         <NuevoMovimiento
@@ -35,7 +36,7 @@ export default async function Home() {
         <section className="col-span-2 flex flex-col gap-3 min-w-0">
           <h2 className="text-sm text-muted-foreground">Gráfico</h2>
           <div className="flex-1 min-h-75 bg-card border border-dashed rounded-xl flex items-center justify-center text-muted-foreground">
-            ToDo
+            <GraficoGastos gastosPorCategoria={dashboard.gastosPorCategoria} />
           </div>
         </section>
         <UltimosMovimientos ultimos={dashboard.ultimos} />

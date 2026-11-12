@@ -25,15 +25,33 @@ export class DashboardService {
     return { desde, hasta };
   }
 
-  async getDashboard() {
-    const periodo = this.calcularPeriodo(new Date(), this.diaCobro);
+  calcularAnio(hoy: Date) {
+    const year = hoy.getUTCFullYear();
 
-    const [totales, ultimos] = await Promise.all([
+    const desde = new Date(Date.UTC(year, 0, 1));
+    const hasta = new Date(Date.UTC(year + 1, 0, 1));
+
+    return { desde, hasta };
+  }
+
+  async getDashboard() {
+    const hoy = new Date();
+    const periodo = this.calcularPeriodo(hoy, this.diaCobro);
+    const anio = this.calcularAnio(hoy);
+
+    const [totales, ultimos, gastosPeriodo, gastosAnio] = await Promise.all([
       this.totales(periodo),
       this.ultimosMovimientos(),
+      this.gastosPorCategoria(periodo, true),
+      this.gastosPorCategoria(anio, false),
     ]);
 
-    return { periodo, totales, ultimos };
+    return {
+      gastosPorCategoria: { periodo: gastosPeriodo, anio: gastosAnio },
+      periodo,
+      totales,
+      ultimos,
+    };
   }
 
   private async totales(periodo: { desde: Date; hasta: Date }) {
@@ -95,5 +113,80 @@ export class DashboardService {
         categoria: { select: { nombre: true } },
       },
     });
+  }
+
+  private async gastosPorCategoria(
+    rango: { desde: Date; hasta: Date },
+    conLimite: boolean,
+  ) {
+    const categorias = this.prisma.categoria.findMany({
+      where: {
+        tipo: 'GASTO',
+      },
+      select: { categoriaId: true, nombre: true, limite: true },
+      orderBy: { nombre: 'asc' },
+    });
+
+    const sumas = this.prisma.movimiento.groupBy({
+      by: 'categoriaId',
+      where: {
+        tipo: 'GASTO',
+        fecha: {
+          gte: rango.desde,
+          lt: rango.hasta,
+        },
+      },
+      _sum: { monto: true },
+    });
+
+    const [cats, grupos] = await Promise.all([categorias, sumas]);
+
+    const mapSums = new Map(grupos.map((g) => [g.categoriaId, g._sum.monto]));
+
+    const result = cats.map((cat) => {
+      const importe = mapSums.get(cat.categoriaId) ?? new Prisma.Decimal(0);
+      const base = {
+        categoriaId: cat.categoriaId,
+        nombre: cat.nombre,
+        importe,
+      };
+
+      if (conLimite && cat.limite !== null) {
+        const exceso = Prisma.Decimal.max(importe.minus(cat.limite), 0);
+        const dentro = Prisma.Decimal.min(importe, cat.limite);
+        const restante = Prisma.Decimal.max(cat.limite.minus(importe), 0);
+        const porcentaje = importe.div(cat.limite).times(100).toFixed(0);
+
+        return {
+          ...base,
+          limite: cat.limite,
+          exceso,
+          dentro,
+          restante,
+          porcentaje,
+        };
+      }
+      return {
+        ...base,
+        limite: null,
+        exceso: null,
+        dentro: null,
+        restante: null,
+        porcentaje: null,
+      };
+    });
+
+    result.sort((a, b) => b.importe.comparedTo(a.importe));
+
+    const salida = result.map((item) => ({
+      ...item,
+      importe: item.importe.toString(),
+      limite: item.limite?.toString() ?? null,
+      exceso: item.exceso?.toString() ?? null,
+      dentro: item.dentro?.toString() ?? null,
+      restante: item.restante?.toString() ?? null,
+    }));
+
+    return salida;
   }
 }

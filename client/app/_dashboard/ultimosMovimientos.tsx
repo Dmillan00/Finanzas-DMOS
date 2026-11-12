@@ -32,14 +32,14 @@ export default function UltimosMovimientos({
           Sin movimientos
         </p>
       ) : (
-        <ul className="flex-1 bg-card border rounded-xl divide-y">
+        <ul className="flex flex-1 flex-col bg-card border rounded-xl divide-y">
           {ultimos.map((m) => {
             const estilo = ESTILO_TIPO[m.tipo];
             const Icono = estilo.icono;
             return (
               <li
                 key={m.movimientoId}
-                className="flex items-center gap-4 px-4 py-3"
+                className="flex flex-1 max-h-28 items-center gap-4 px-4 py-3"
               >
                 <div
                   className={cn(

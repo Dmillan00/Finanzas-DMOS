@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { crearCategoria, editarCategoria } from './actions';
 import type { Categoria } from '@/components/props';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -31,6 +31,8 @@ export default function CategoriaForm({
   const accion = categoria
     ? editarCategoria.bind(null, categoria.categoriaId)
     : crearCategoria;
+
+  const [tipo, setTipo] = useState(categoria?.tipo ?? 'GASTO');
 
   const [state, formAction, pending] = useActionState(accion, {
     ok: false,
@@ -79,7 +81,16 @@ export default function CategoriaForm({
             ) : (
               <>
                 <FieldLabel htmlFor="tipo">Tipo</FieldLabel>
-                <Select defaultValue={'GASTO'} items={selectTipo} name="tipo">
+                <Select
+                  value={tipo}
+                  onValueChange={(value) => {
+                    if (value !== null) {
+                      setTipo(value);
+                    }
+                  }}
+                  items={selectTipo}
+                  name="tipo"
+                >
                   <SelectTrigger id="tipo" className="w-full">
                     <SelectValue placeholder="Elige un tipo"></SelectValue>
                   </SelectTrigger>
@@ -96,6 +107,21 @@ export default function CategoriaForm({
               </>
             )}
           </Field>
+          {tipo === 'GASTO' && (
+            <Field>
+              <FieldLabel htmlFor="limite"> Limite de gasto</FieldLabel>
+
+              <Input
+                name="limite"
+                type="number"
+                id="limite"
+                min={0.01}
+                step={'0.01'}
+                defaultValue={categoria?.limite ?? ''}
+                placeholder="10"
+              />
+            </Field>
+          )}
 
           <Button type="submit" disabled={pending} className={'font-bold'}>
             {textButton}
