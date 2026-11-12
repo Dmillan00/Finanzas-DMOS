@@ -9,6 +9,7 @@ export type Categoria = {
   categoriaId: number;
   nombre: string;
   tipo: 'INGRESO' | 'GASTO';
+  limite: string | null;
 };
 
 export type Movimiento = {
@@ -27,6 +28,7 @@ export type Dashboard = {
   periodo: { desde: string; hasta: string }; // Llega como ISO
   totales: { ingresos: string; gastos: string; queda: string };
   ultimos: UltimoMovimiento[];
+  gastosPorCategoria: { periodo: GastoCategoria[]; anio: GastoCategoria[] };
 };
 
 export type UltimoMovimiento = {
@@ -38,3 +40,14 @@ export type UltimoMovimiento = {
 };
 
 export type Tipo = 'INGRESO' | 'GASTO' | 'TRANSFERENCIA';
+
+export type GastoCategoria = {
+  categoriaId: number;
+  nombre: string;
+  importe: string;
+  limite: string | null;
+  dentro: string | null;
+  restante: string | null;
+  exceso: string | null;
+  porcentaje: string | null;
+};
