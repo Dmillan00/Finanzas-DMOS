@@ -6,6 +6,9 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+#Docker override
+docker-compose.override.yml
+
 #claude
 .claude/skills
 CLAUDE.md
