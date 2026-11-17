@@ -2,188 +2,84 @@
 
 App de finanzas personales: cuentas con su saldo, movimientos (ingresos, gastos y transferencias) y un dashboard por periodo de cobro.
 
-## Stack
+**Stack:** NestJS (ESM) + Prisma 7 · Next.js + Tailwind + shadcn/ui (Base UI) · PostgreSQL 17 · Docker Compose.
 
-| Parte | Tecnología |
-| --- | --- |
-| Server | NestJS (ESM), Prisma 7, vitest, oxlint |
-| Client | Next.js, TypeScript, Tailwind, shadcn/ui (Base UI), Sonner |
-| Base de datos | PostgreSQL 17 |
-| Despliegue | Docker Compose |
+## Modos y puertos
 
-## Dos formas de usarlo
-
-| | Uso normal | Desarrollo |
-| --- | --- | --- |
-| Para qué | Usar la app con los datos reales | Programar y probar cambios |
-| Cómo se levanta | Todo con Docker Compose | Postgres en Docker, server y client con npm |
-| BD | Principal (`POSTGRES_DB_MAIN`) | Desarrollo (`POSTGRES_DB`) |
-| Abrir en | `http://localhost:8014` | `http://localhost:8012` |
-| Requisitos | Git, Docker con Compose | Git, Docker con Compose, Node.js LTS con npm |
-
-Los pasos 1 y 2 son comunes. Después sigue solo la sección que te toque.
-
-## Puertos
+Un solo PostgreSQL con dos BD: la **principal** (`POSTGRES_DB_MAIN`, datos reales) y la de **desarrollo** (`POSTGRES_DB`, npm, `migrate dev` y e2e).
 
 | Puerto | Servicio | Modo |
 | --- | --- | --- |
-| 8011 | PostgreSQL | Ambos |
-| 8013 | Server | Uso normal |
-| 8014 | Client | Uso normal |
-| 8010 | Server | Desarrollo |
-| 8012 | Client | Desarrollo |
+| 8014 | Client | Uso normal (Docker Compose, BD principal) |
+| 8013 | Server | Uso normal ¹ |
+| 8012 / 8010 | Client / Server | Desarrollo (npm, BD de desarrollo) |
+| 8011 | PostgreSQL | Ambos ¹ |
 
-## Bases de datos
+¹ Solo con `docker-compose.override.yml` (ver Configuración). Sin él, el compose solo publica el client.
 
-Un solo PostgreSQL con dos bases de datos:
-
-| BD | Variable | Uso | Cómo se crea |
-| --- | --- | --- | --- |
-| Principal | `POSTGRES_DB_MAIN` | Uso normal (datos reales) | A mano (ver Uso normal, paso 3) |
-| Desarrollo | `POSTGRES_DB` | `npm run start:dev`, `prisma migrate dev` y tests e2e | Sola, la primera vez que arranca Postgres |
-
----
-
-## Común
-
-### 1. Clonar
+## Configuración
 
 ```bash
 git clone https://github.com/Dmillan00/Finanzas-DMOS.git
 cd Finanzas-DMOS
 ```
 
-### 2. `.env` de la raíz
+Copia cada `.example` y rellénalo. Los `.env` no se suben al repo.
 
-Copia `.env.example` a `.env` y rellena:
-
-| Variable | Valor |
+| Archivo | Variables |
 | --- | --- |
-| `POSTGRES_USER` / `POSTGRES_PASSWORD` | Credenciales de Postgres |
-| `POSTGRES_DB` | Nombre de la BD de desarrollo |
-| `POSTGRES_DB_MAIN` | Nombre de la BD principal |
-| `DB_PORT` | `8011` |
-| `SERVER_PORT_MAIN` | `8013` |
-| `CLIENT_PORT_MAIN` | `8014` |
+| `.env` | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_DB_MAIN`, `DB_PORT=8011`, `SERVER_PORT_MAIN=8013`, `CLIENT_PORT_MAIN=8014`, `BACKUP_DIR` (carpeta de backups fuera del repo, p. ej. `../Respaldo/FinanzasDMOS`) |
+| `server/.env` | `DATABASE_URL` (BD de desarrollo en `localhost:8011`; en Docker la sobrescribe el compose), `PORT=8010`, `CORS_ORIGIN=http://localhost:8012`, `DIA_COBRO` (1–28). **Obligatorio también con Docker** |
+| `client/.env.local` | `API_URL=http://localhost:8010`. Solo para desarrollo |
+| `docker-compose.override.yml` | Copia de `docker-compose.override.example.yml`: publica PostgreSQL y el server. Solo en el PC ⚠️ no lo crees en un servidor |
 
-> Los valores del `.env.example` son de ejemplo (puertos incluidos). Usa los de esta tabla.
->
-> Los `.env` no se suben al repo. No pongas contraseñas reales en los `.example`.
-
----
+> Los valores de los `.example` son de ejemplo (puertos incluidos): usa los de esta tabla.
 
 ## Uso normal (Docker Compose)
 
-### 1. `server/.env`
-
-Copia `server/.env.example` a `server/.env`. **Es obligatorio aunque no uses npm**: el compose lo carga y falla si no existe.
-
-| Variable | Valor |
-| --- | --- |
-| `DATABASE_URL` | Da igual cuál pongas: el compose la sobrescribe para apuntar a la BD principal |
-| `PORT` | `8010` |
-| `CORS_ORIGIN` | `http://localhost:8012` |
-| `DIA_COBRO` | Día de cobro (1–28) |
-
-No hace falta `client/.env.local`: el compose ya le pasa `API_URL` al client.
-
-### 2. Levantar PostgreSQL
-
 ```bash
 docker compose up -d postgres
-```
-
-### 3. Crear la BD principal (solo la primera vez)
-
-```bash
+# Solo la primera vez: crear la BD principal (sin ella el server no arranca)
 docker exec -it finanzas_dmos_db psql -U <POSTGRES_USER> -d postgres -c "CREATE DATABASE <POSTGRES_DB_MAIN>;"
+docker compose up -d --build   # http://localhost:8014
+docker compose down            # parar
 ```
 
-Sin ella el server no arranca (falla `prisma migrate deploy`).
+El server aplica las migraciones al arrancar (`prisma migrate deploy`). Usa `--build` cada vez que cambie el código.
 
-### 4. Levantar la app
-
-```bash
-docker compose up -d --build
-```
-
-- Abre `http://localhost:8014`.
-- Al arrancar, el server aplica las migraciones pendientes (`prisma migrate deploy`) en la BD principal.
-- Usa `--build` la primera vez y cada vez que cambie el código.
-
-### 5. Pararla
-
-```bash
-docker compose down
-```
-
-> ⚠️ No uses `docker compose down -v`: borra el volumen `postgres_data` con todos los datos.
-
----
+> ⚠️ Nunca `docker compose down -v`: borra el volumen `postgres_data` con todos los datos.
 
 ## Desarrollo (npm)
 
-### 1. `server/.env`
+```bash
+docker compose up -d postgres            # la BD de desarrollo se crea sola
 
-Copia `server/.env.example` a `server/.env`:
+# Terminal 1, desde la raíz del repo
+cd server && npm install && npx prisma generate && npx prisma migrate deploy
+npm run start:dev                        # http://localhost:8010
 
-| Variable | Valor |
+# Terminal 2, desde la raíz del repo
+cd client && npm install && npm run dev  # http://localhost:8012
+```
+
+Tests, desde `server/`: `npm test` (unitarios) y `npm run test:e2e` (contra la BD de desarrollo).
+
+## Backups
+
+`pg_dump -Fc` de la BD principal a `BACKUP_DIR` (relativa = desde la raíz del repo), como `<bd>_AAAA-MM-DD.dump`.
+
+| Qué | Para qué |
 | --- | --- |
-| `DATABASE_URL` | `postgresql://<POSTGRES_USER>:<POSTGRES_PASSWORD>@localhost:8011/<POSTGRES_DB>?schema=public` |
-| `PORT` | `8010` |
-| `CORS_ORIGIN` | `http://localhost:8012` |
-| `DIA_COBRO` | Día de cobro (1–28) |
+| Servicio `backup` | Backup diario automático con `docker compose up`; guarda 28 días |
+| `scripts/backup.ps1` | Backup a mano |
+| `scripts/verificar.ps1` / `.sh` | Restaura un backup en una BD temporal para comprobarlo, sin tocar la principal |
+| `scripts/restore.ps1` / `.sh` | 🚨 Reemplaza la BD principal por un backup (antes guarda una copia `_antes-restore`) |
 
-### 2. `client/.env.local`
-
-Copia `client/.env.example` a `client/.env.local`:
-
-```
-API_URL=http://localhost:8010
-```
-
-### 3. Levantar solo PostgreSQL
-
-```bash
-docker compose up -d postgres
-```
-
-La BD de desarrollo se crea sola. No hace falta crear la principal.
-
-### 4. Server
-
-```bash
-cd server
-npm install
-npx prisma generate
-npx prisma migrate deploy
-npm run start:dev    # http://localhost:8010
-```
-
-### 5. Client (en otra terminal)
-
-```bash
-cd client
-npm install
-npm run dev          # http://localhost:8012
-```
-
-### 6. Tests
-
-Desde `server/`:
-
-```bash
-npm test             # unitarios
-npm run test:e2e     # e2e, contra la BD de desarrollo
-```
-
----
+`.ps1`: `powershell -ExecutionPolicy Bypass -File .\scripts\<script>.ps1 [-Archivo <dump>]` · `.sh`: `sh scripts/<script>.sh [<dump>]`. Sin archivo, usan el más reciente.
 
 ## Flujo de trabajo
 
-- `main` es la versión estable.
-- Cada cambio va en una rama (`feat/`, `fix/`, `refactor/`) y entra por PR.
-- Solo una rama con migraciones de Prisma abierta a la vez.
+`main` es la versión estable. Cada cambio va en una rama (`feature/`, `fix/`, `refactor/`) y entra por PR. Solo una rama con migraciones de Prisma abierta a la vez.
 
 ## Licencia
 

@@ -6,7 +6,7 @@
 #
 # Uso (desde cualquier carpeta):
 #   powershell -ExecutionPolicy Bypass -File .\scripts\restore.ps1
-#       -> usa el backup mas reciente de ..\Respaldo\FinanzasDMOS
+#       -> usa el backup mas reciente de BACKUP_DIR (del .env)
 #   powershell -ExecutionPolicy Bypass -File .\scripts\restore.ps1 -Archivo finanzas_main_2026-11-06.dump
 #       -> usa ese backup (nombre dentro de la carpeta o ruta completa)
 
@@ -15,7 +15,6 @@ param([string]$Archivo)
 # --- Configuracion ---
 $raizRepo   = Split-Path -Parent $PSScriptRoot
 $contenedor = 'finanzas_dmos_db'
-$carpeta    = [System.IO.Path]::GetFullPath((Join-Path $raizRepo '..\Respaldo\FinanzasDMOS'))
 
 function Fallar($mensaje) {
   Write-Host "ERROR: $mensaje" -ForegroundColor Red
@@ -34,7 +33,11 @@ Get-Content $envFile | ForEach-Object {
 }
 $usuario = $vars['POSTGRES_USER']
 $bd      = $vars['POSTGRES_DB_MAIN']
-if (-not $usuario -or -not $bd) { Fallar 'Faltan POSTGRES_USER o POSTGRES_DB_MAIN en el .env' }
+$carpeta = $vars['BACKUP_DIR']
+if (-not $usuario -or -not $bd -or -not $carpeta) { Fallar 'Faltan POSTGRES_USER, POSTGRES_DB_MAIN o BACKUP_DIR en el .env' }
+# BACKUP_DIR relativo = relativo a la raiz del repo (igual que en el compose y en los .sh).
+if (-not [System.IO.Path]::IsPathRooted($carpeta)) { $carpeta = Join-Path $raizRepo $carpeta }
+$carpeta = [System.IO.Path]::GetFullPath($carpeta)
 
 # --- Elegir el backup ---
 if ($Archivo) {

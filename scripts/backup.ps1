@@ -3,13 +3,12 @@
 # Uso (desde cualquier carpeta):
 #   powershell -ExecutionPolicy Bypass -File .\scripts\backup.ps1
 #
-# Guarda el backup en ..\Respaldo\FinanzasDMOS (fuera del repo) con la fecha de hoy.
-# Para restaurar: guia "Backup y restauracion de Finanzas DMOS" del vault.
+# Guarda el backup en BACKUP_DIR (del .env, fuera del repo) con la fecha de hoy.
+# Para verificar y restaurar: ver README, seccion Backups.
 
 # --- Configuracion ---
 $raizRepo   = Split-Path -Parent $PSScriptRoot
 $contenedor = 'finanzas_dmos_db'
-$carpeta    = [System.IO.Path]::GetFullPath((Join-Path $raizRepo '..\Respaldo\FinanzasDMOS'))
 
 function Fallar($mensaje) {
   Write-Host "ERROR: $mensaje" -ForegroundColor Red
@@ -28,7 +27,11 @@ Get-Content $envFile | ForEach-Object {
 }
 $usuario = $vars['POSTGRES_USER']
 $bd      = $vars['POSTGRES_DB_MAIN']
-if (-not $usuario -or -not $bd) { Fallar 'Faltan POSTGRES_USER o POSTGRES_DB_MAIN en el .env' }
+$carpeta = $vars['BACKUP_DIR']
+if (-not $usuario -or -not $bd -or -not $carpeta) { Fallar 'Faltan POSTGRES_USER, POSTGRES_DB_MAIN o BACKUP_DIR en el .env' }
+# BACKUP_DIR relativo = relativo a la raiz del repo (igual que en el compose y en los .sh).
+if (-not [System.IO.Path]::IsPathRooted($carpeta)) { $carpeta = Join-Path $raizRepo $carpeta }
+$carpeta = [System.IO.Path]::GetFullPath($carpeta)
 
 $fecha   = Get-Date -Format 'yyyy-MM-dd'
 $archivo = "${bd}_$fecha.dump"

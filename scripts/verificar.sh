@@ -2,7 +2,7 @@
 # Comprueba que un backup se puede restaurar, SIN tocar la BD real.
 # Lo restaura en una BD temporal (finanzas_restore_test), muestra cuantas filas
 # hay en cada tabla y la borra al terminar.
-# Version Linux (ZimaOS) de verificar.ps1.
+# Version Linux (servidor) de verificar.ps1.
 #
 # Uso (desde cualquier carpeta):
 #   sh scripts/verificar.sh

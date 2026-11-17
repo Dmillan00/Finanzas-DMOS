@@ -1,11 +1,11 @@
 #!/bin/sh
 # EMERGENCIA: reemplaza la BD real (POSTGRES_DB_MAIN) por un backup.
 # Todo lo que se hizo despues de ese backup se pierde.
-# Version Linux (ZimaOS) de restore.ps1.
+# Version Linux (servidor) de restore.ps1.
 #
 # Antes de borrar nada hace una copia de como esta ahora
 # (..._antes-restore.dump), para poder volver atras.
-# Si la BD no existe (primer arranque en ZimaOS), la crea y restaura sin copia.
+# Si la BD no existe (primer arranque en el servidor), la crea y restaura sin copia.
 #
 # Uso (desde cualquier carpeta):
 #   sh scripts/restore.sh

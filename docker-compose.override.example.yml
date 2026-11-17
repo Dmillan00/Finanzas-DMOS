@@ -1,0 +1,7 @@
+services:
+  postgres:
+    ports:
+      - "${DB_PORT}:5432"
+  server:
+    ports:
+      - "${SERVER_PORT_MAIN}:8010"
