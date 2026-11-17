@@ -38,5 +38,23 @@ services:
     depends_on:
       - server
 
+  backup:
+    image: postgres:17
+    container_name: finanzas_dmos_backup
+    restart: always
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB_MAIN}
+      TZ: Europe/Madrid
+    volumes:
+      - ./scripts/backup-auto.sh:/backup-auto.sh:ro
+      - ${BACKUP_DIR}:/backups
+    command: ["sh", "/backup-auto.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
