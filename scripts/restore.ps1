@@ -14,7 +14,6 @@ param([string]$Archivo)
 
 # --- Configuracion ---
 $raizRepo   = Split-Path -Parent $PSScriptRoot
-$compose    = Join-Path $raizRepo 'docker-compose.yml'
 $contenedor = 'finanzas_dmos_db'
 $carpeta    = [System.IO.Path]::GetFullPath((Join-Path $raizRepo '..\Respaldo\FinanzasDMOS'))
 
@@ -76,7 +75,8 @@ if ($respuesta -cne 'SI') {
 }
 
 # --- Parar server y client (nadie escribe en la BD mientras restauramos) ---
-docker compose -f $compose stop server client
+Push-Location $raizRepo
+docker compose stop server client
 if ($LASTEXITCODE -ne 0) { Fallar 'No se pudieron parar server y client.' }
 
 # --- Copia de seguridad de como esta ahora (si la BD existe) ---
@@ -127,7 +127,8 @@ $sql = 'SELECT ''Categoria'' AS tabla, count(*) AS filas FROM "Categoria" UNION 
 $sql | docker exec -i $contenedor psql -U $usuario -d $bd
 
 # --- Levantar la app ---
-docker compose -f $compose up -d
+docker compose up -d
+Pop-Location
 if ($LASTEXITCODE -ne 0) { Fallar 'Restaurado, pero la app no arranco. Revisa: docker compose logs server' }
 
 Write-Host "Restore OK: '$bd' restaurada desde $nombre. App levantada." -ForegroundColor Green
