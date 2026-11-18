@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { ArrowDownRight, ArrowLeftRight, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PANEL_MOVIL_ANCHO } from '@/libs/estilos';
 
 const BOTONES: {
   tipo: Tipo;
@@ -48,7 +49,7 @@ export default function NuevoMovimiento({
   const [tipo, setTipo] = useState<Tipo | null>(null);
 
   return (
-    <section className="flex flex-col gap-3 border-l pl-5 min-w-0">
+    <section className="flex flex-col gap-3 border-t pt-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-5 min-w-0">
       <h2 className="text-xs uppercase tracking-wider text-muted-foreground">
         Nuevo movimiento
       </h2>
@@ -85,7 +86,7 @@ export default function NuevoMovimiento({
           }
         }}
       >
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className={PANEL_MOVIL_ANCHO}>
           <DialogHeader>
             <DialogTitle>Nuevo Movimiento</DialogTitle>
           </DialogHeader>

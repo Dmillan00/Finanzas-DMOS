@@ -9,25 +9,36 @@ import {
 } from '@/components/ui/navigation-menu';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-const enlaces: { href: string; label: string }[] = [
+import {
+  ArrowLeftRight,
+  CreditCard,
+  LayoutDashboard,
+  type LucideIcon,
+  Tag,
+} from 'lucide-react';
+const enlaces: { href: string; label: string; icono: LucideIcon }[] = [
   {
     href: '/',
     label: 'Dashboard',
+    icono: LayoutDashboard,
   },
 
   {
     href: '/cuentas',
     label: 'Cuentas',
+    icono: CreditCard,
   },
 
   {
     href: '/movimientos',
     label: 'Movimientos',
+    icono: ArrowLeftRight,
   },
 
   {
     href: '/categorias',
     label: 'Categorias',
+    icono: Tag,
   },
 ];
 
@@ -60,27 +71,34 @@ export default function Navbar({ bd }: { bd: string | null }) {
         )}
       </div>
 
-      <NavigationMenu>
-        <NavigationMenuList className="relative rounded-full border p-1">
+      <NavigationMenu className="fixed inset-x-3 bottom-4 z-50 max-w-none lg:static lg:max-w-max">
+        <NavigationMenuList className="relative rounded-full border p-1 w-full">
           <li
             aria-hidden="true"
-            className="absolute inset-y-1 left-1 w-32 rounded-full bg-muted transition-[transform,opacity] duration-200 ease-(--ease-in-out) motion-reduce:transition-none"
+            className="absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/4)] lg:w-32 rounded-full bg-muted transition-[transform,opacity] duration-200 ease-(--ease-in-out) motion-reduce:transition-none"
             style={{
               transform: `translateX(${Math.max(indice, 0) * 100}%)`,
               opacity: indice === -1 ? 0 : 1,
             }}
           />
-          {enlaces.map((item) => (
-            <NavigationMenuItem key={item.href} className="w-32">
-              <NavigationMenuLink
-                className="justify-center rounded-full px-4 py-2 text-muted-foreground transition-[color,transform] duration-200 ease-(--ease-out) active:scale-[0.97] data-active:text-primary"
-                render={<Link href={item.href} />}
-                active={path === item.href}
+          {enlaces.map((item) => {
+            const Icono = item.icono;
+            return (
+              <NavigationMenuItem
+                key={item.href}
+                className="flex-1 lg:w-32 lg:flex-none"
               >
-                {item.label}
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-          ))}
+                <NavigationMenuLink
+                  className="justify-center flex-col text-xs lg:text-sm px-1 lg:px-4 lg:flex-row rounded-full  py-2 text-muted-foreground transition-[color,transform] duration-200 ease-(--ease-out) active:scale-[0.97] data-active:text-primary"
+                  render={<Link href={item.href} />}
+                  active={path === item.href}
+                >
+                  <Icono className="size-4 lg:hidden" />
+                  {item.label}
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            );
+          })}
         </NavigationMenuList>
       </NavigationMenu>
     </header>

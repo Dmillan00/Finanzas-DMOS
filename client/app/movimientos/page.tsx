@@ -1,8 +1,8 @@
 import { formatearDia, formatearMonto } from '@/libs/formatos';
 import type { Cuenta, Categoria, Movimiento } from '@/components/props';
 import { ArrowLeftRight, ArrowDownRight, ArrowUpRight } from 'lucide-react';
-import EditarMovimiento from './editarMovimiento';
-import EliminarMovimiento from './eliminarMovimiento';
+import AccionesMovimiento from './accionesMovimiento';
+import TextoDesplegable from '@/components/textoDesplegable';
 import { Button } from '@/components/ui/button';
 import { connection } from 'next/server';
 import NuevoMovimiento from './nuevoMovimiento';
@@ -108,21 +108,24 @@ export default async function Movimientos({
 
   return (
     <main className="px-5 py-2 mx-auto w-full max-w-7xl">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-y-3 lg:flex-nowrap">
         <div>
           <h1 className="text-3xl font-semibold text-primary">Movimientos</h1>
           <span className="text-muted-foreground">
             {movimientos.length} movimientos en {selectMeses[month - 1].label}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <form method="get" className="flex items-center gap-2">
+        <div className="items-center gap-2 contents lg:flex">
+          <form
+            method="get"
+            className="flex items-center gap-2 order-last w-full lg:order-0 lg:w-auto"
+          >
             <Select
               items={selectMeses}
               name="month"
               defaultValue={String(month)}
             >
-              <SelectTrigger id="month" className="w-36">
+              <SelectTrigger id="month" className="flex-1 lg:w-36 lg:flex-none">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent alignItemWithTrigger={false}>
@@ -137,7 +140,7 @@ export default async function Movimientos({
             </Select>
 
             <Input
-              className="w-24"
+              className="w-20 lg:w-24"
               name="year"
               defaultValue={year}
               type="number"
@@ -200,12 +203,10 @@ export default async function Movimientos({
                       >
                         <Icono></Icono>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium">{movimiento.nombre}</p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {datos}
-                        </p>
-                      </div>
+                      <TextoDesplegable
+                        principal={movimiento.nombre}
+                        secundario={datos}
+                      />
 
                       <p
                         className={cn(
@@ -217,12 +218,11 @@ export default async function Movimientos({
                         {formatearMonto(movimiento.monto)}
                       </p>
 
-                      <EditarMovimiento
+                      <AccionesMovimiento
                         cuentas={cuentas}
                         categorias={categorias}
                         movimiento={movimiento}
                       />
-                      <EliminarMovimiento movimiento={movimiento} />
                     </li>
                   );
                 })}

@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { PlusIcon } from 'lucide-react';
+import { PANEL_MOVIL_ANCHO } from '@/libs/estilos';
 
 export default function NuevoMovimiento({
   cuentas,
@@ -31,7 +32,7 @@ export default function NuevoMovimiento({
           </Button>
         }
       />
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className={PANEL_MOVIL_ANCHO}>
         <DialogHeader>
           <DialogTitle>Nuevo Movimiento</DialogTitle>
         </DialogHeader>

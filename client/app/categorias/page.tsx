@@ -5,6 +5,7 @@ import { connection } from 'next/server';
 import NuevaCategoria from './nuevaCategoria';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import TextoDesplegable from '@/components/textoDesplegable';
 
 const ESTILO_TIPO = {
   GASTO: {
@@ -84,9 +85,7 @@ export default async function Categorias() {
                           >
                             <Icono></Icono>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium">{categoria.nombre}</p>
-                          </div>
+                          <TextoDesplegable principal={categoria.nombre} />
 
                           <EditarCategoria categoria={categoria} />
                           <EliminarCategoria categoria={categoria} />

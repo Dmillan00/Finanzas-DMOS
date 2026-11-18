@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { PANEL_MOVIL } from '@/libs/estilos';
 
 export default function EditarCategoria({
   categoria,
@@ -33,7 +34,7 @@ export default function EditarCategoria({
           </Button>
         }
       />
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className={PANEL_MOVIL}>
         <DialogHeader>
           <DialogTitle>
             Editar Categoría:{' '}

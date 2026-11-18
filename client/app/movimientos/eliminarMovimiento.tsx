@@ -1,9 +1,8 @@
 'use client';
 import type { Movimiento } from '@/components/props';
-import { useTransition, useState } from 'react';
 import { eliminarMovimiento } from './actions';
+import { useTransition } from 'react';
 import { Button } from '@/components/ui/button';
-import { Trash } from 'lucide-react';
 import {
   Dialog,
   DialogClose,
@@ -12,17 +11,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 
 import { toast } from 'sonner';
 
 export default function EliminarMovimiento({
   movimiento,
+  abierto,
+  onAbiertoChange,
 }: {
   movimiento: Movimiento;
+  abierto: boolean;
+  onAbiertoChange: (abierto: boolean) => void;
 }) {
-  const [abierto, setAbierto] = useState(false);
   const [pendiente, startTransition] = useTransition();
 
   const confirmar = () => {
@@ -30,7 +31,7 @@ export default function EliminarMovimiento({
       const resultado = await eliminarMovimiento(movimiento.movimientoId);
       if (resultado.ok) {
         toast.success(resultado.message);
-        setAbierto(false);
+        onAbiertoChange(false);
       } else {
         toast.error(resultado.message);
       }
@@ -38,18 +39,7 @@ export default function EliminarMovimiento({
   };
 
   return (
-    <Dialog open={abierto} onOpenChange={setAbierto}>
-      <DialogTrigger
-        render={
-          <Button
-            variant={'ghost'}
-            className={'text-muted-foreground hover:text-destructive'}
-            size="icon-sm"
-          >
-            <Trash></Trash>
-          </Button>
-        }
-      />
+    <Dialog open={abierto} onOpenChange={onAbiertoChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>¿Eliminar Movimiento?</DialogTitle>

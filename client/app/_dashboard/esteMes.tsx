@@ -21,7 +21,7 @@ export default function EsteMes({
   const negativo = Number(totales.queda) < 0;
 
   return (
-    <section className="flex flex-col gap-3 border-l pl-5 min-w-0">
+    <section className="flex flex-col gap-3 border-t lg:border-t-0 lg:border-l lg:pt-0 lg:pl-5 pt-5 min-w-0">
       <h2 className="text-muted-foreground text-xs uppercase tracking-wider">
         {titulo}
       </h2>

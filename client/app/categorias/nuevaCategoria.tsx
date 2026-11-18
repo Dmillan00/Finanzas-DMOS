@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { PlusIcon } from 'lucide-react';
+import { PANEL_MOVIL } from '@/libs/estilos';
 
 export default function NuevaCategoria() {
   const [abierto, setAbierto] = useState(false);
@@ -23,7 +24,7 @@ export default function NuevaCategoria() {
           </Button>
         }
       />
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className={PANEL_MOVIL}>
         <DialogHeader>
           <DialogTitle>Nueva Categoría</DialogTitle>
         </DialogHeader>

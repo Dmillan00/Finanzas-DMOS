@@ -1,6 +1,7 @@
 'use client';
 import type { GastoCategoria } from '@/components/props';
 import { useState } from 'react';
+import { useEsMovil } from '@/libs/useEsMovil';
 import type { ChartConfig } from '@/components/ui/chart';
 import { ChartContainer } from '@/components/ui/chart';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -50,12 +51,19 @@ const ANCHO_TEXTO = 250;
 const GROSOR_BARRA = 22;
 // Lo que sobresale la raya del límite por arriba y por abajo de la barra
 const SOBRA_RAYA = 4;
+//Media Query
 
 // Dibuja la pista de fondo (debajo de las barras) y, encima de ellas, la raya
 // del límite y los textos de cada fila. Usa las escalas del propio gráfico
 // para saber dónde cae cada valor en píxeles. Las capas (zIndex) controlan
 // qué queda debajo y qué encima de las barras.
-function Anotaciones({ barras }: { barras: Barra[] }) {
+function Anotaciones({
+  barras,
+  esMovil,
+}: {
+  barras: Barra[];
+  esMovil: boolean;
+}) {
   const escalaX = useXAxisScale();
   const escalaY = useYAxisScale();
   const area = usePlotArea();
@@ -63,7 +71,7 @@ function Anotaciones({ barras }: { barras: Barra[] }) {
   if (!escalaX || !escalaY || !area) {
     return null;
   }
-
+  const subir = GROSOR_BARRA / 2 + 8;
   const derecha = area.x + area.width;
 
   const filas = barras.flatMap((barra) => {
@@ -115,39 +123,76 @@ function Anotaciones({ barras }: { barras: Barra[] }) {
                   />
                 )}
 
-                <text
-                  x={derecha + 150}
-                  y={medio}
-                  textAnchor="end"
-                  dominantBaseline="central"
-                  className="text-xs"
-                >
-                  <tspan
-                    className={pasado ? 'fill-destructive' : 'fill-primary'}
-                  >
-                    {barra.importe}
-                  </tspan>
-                  {barra.limiteTexto !== null && (
-                    <tspan className="fill-muted-foreground">
-                      {' / ' + barra.limiteTexto}
-                    </tspan>
-                  )}
-                </text>
+                {esMovil ? (
+                  <>
+                    <text
+                      x={area.x}
+                      y={medio - subir}
+                      textAnchor="start"
+                      dominantBaseline="central"
+                      className="fill-foreground text-xs"
+                    >
+                      {recortar(barra.nombre)}
+                    </text>
 
-                {barra.limiteTexto !== null && (
-                  <text
-                    x={derecha + ANCHO_TEXTO - 10}
-                    y={medio}
-                    textAnchor="end"
-                    dominantBaseline="central"
-                    className={
-                      pasado
-                        ? 'fill-destructive text-xs'
-                        : 'fill-muted-foreground text-xs'
-                    }
-                  >
-                    {pasado ? '+' + barra.excesoTexto : barra.porcentaje + ' %'}
-                  </text>
+                    <text
+                      x={derecha}
+                      y={medio - subir}
+                      textAnchor="end"
+                      dominantBaseline="central"
+                      className="text-xs"
+                    >
+                      <tspan
+                        className={pasado ? 'fill-destructive' : 'fill-primary'}
+                      >
+                        {barra.importe}
+                      </tspan>
+                      {barra.limiteTexto !== null && (
+                        <tspan className="fill-muted-foreground">
+                          {' / ' + barra.limiteTexto}
+                        </tspan>
+                      )}
+                    </text>
+                  </>
+                ) : (
+                  <>
+                    <text
+                      x={derecha + 150}
+                      y={medio}
+                      textAnchor="end"
+                      dominantBaseline="central"
+                      className="text-xs"
+                    >
+                      <tspan
+                        className={pasado ? 'fill-destructive' : 'fill-primary'}
+                      >
+                        {barra.importe}
+                      </tspan>
+                      {barra.limiteTexto !== null && (
+                        <tspan className="fill-muted-foreground">
+                          {' / ' + barra.limiteTexto}
+                        </tspan>
+                      )}
+                    </text>
+
+                    {barra.limiteTexto !== null && (
+                      <text
+                        x={derecha + ANCHO_TEXTO - 10}
+                        y={medio}
+                        textAnchor="end"
+                        dominantBaseline="central"
+                        className={
+                          pasado
+                            ? 'fill-destructive text-xs'
+                            : 'fill-muted-foreground text-xs'
+                        }
+                      >
+                        {pasado
+                          ? '+' + barra.excesoTexto
+                          : barra.porcentaje + ' %'}
+                      </text>
+                    )}
+                  </>
                 )}
               </g>
             );
@@ -156,6 +201,10 @@ function Anotaciones({ barras }: { barras: Barra[] }) {
       </ZIndexLayer>
     </>
   );
+}
+
+function recortar(nombre: string) {
+  return nombre.length > 16 ? nombre.slice(0, 15) + '…' : nombre;
 }
 
 // Categorías por página y % del límite a partir del cual una categoría se
@@ -240,6 +289,7 @@ export default function GraficoGastos({
   const lista = gastosPorCategoria[modo];
   const elegidas = lista.filter((c) => seleccion.has(c.categoriaId));
   const todas = elegidas.map(aBarra);
+  const esMovil = useEsMovil();
 
   const paginas = Math.max(1, Math.ceil(todas.length / POR_PAGINA));
   const paginaActual = Math.min(pagina, paginas - 1);
@@ -290,124 +340,133 @@ export default function GraficoGastos({
 
   return (
     <div className="w-full p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Gasto por categoría
-          </p>
-          <p className="text-2xl font-semibold">
-            {formatearMonto(String(-total))}
-            {modo === 'periodo' && (
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                · {pasadas} {pasadas === 1 ? 'categoría' : 'categorías'} por
-                encima del límite
-              </span>
-            )}
-          </p>
+      <div className="grid grid-cols-[1fr_auto] items-center gap-3 lg:block">
+        <div className="contents lg:flex lg:items-start lg:justify-between lg:gap-4">
+          <div className="col-span-2">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Gasto por categoría
+            </p>
+            <p className="text-2xl font-semibold">
+              {formatearMonto(String(-total))}
+              {modo === 'periodo' && (
+                <span className="mt-1 block text-sm font-normal text-muted-foreground lg:mt-0 lg:ml-2 lg:inline">
+                  <span className="hidden lg:inline">· </span>
+                  {pasadas} {pasadas === 1 ? 'categoría' : 'categorías'} por
+                  encima del límite
+                </span>
+              )}
+            </p>
+          </div>
+
+          <ToggleGroup
+            size="sm"
+            className="relative col-start-2 row-start-2 gap-0 rounded-full border p-1"
+            onValueChange={(valor) => {
+              const nuevo = valor[0];
+              if (nuevo === 'periodo' || nuevo === 'anio') {
+                setModo(nuevo);
+                setPagina(0);
+              }
+            }}
+            value={[modo]}
+          >
+            <span
+              aria-hidden="true"
+              className="absolute inset-y-1 left-1 w-16 lg:w-20 rounded-full bg-muted transition-transform duration-200 ease-in-out motion-reduce:transition-none"
+              style={{ transform: `translateX(${modo === 'anio' ? 100 : 0}%)` }}
+            />
+            {OPCIONES_MODO.map((opcion) => (
+              <ToggleGroupItem
+                key={opcion.valor}
+                value={opcion.valor}
+                className="relative w-16 lg:w-20 rounded-full text-muted-foreground hover:bg-transparent aria-pressed:bg-black aria-pressed:text-primary"
+              >
+                {opcion.texto}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
         </div>
 
-        <ToggleGroup
-          size="sm"
-          className="relative gap-0 rounded-full border p-1"
-          onValueChange={(valor) => {
-            const nuevo = valor[0];
-            if (nuevo === 'periodo' || nuevo === 'anio') {
-              setModo(nuevo);
-              setPagina(0);
-            }
-          }}
-          value={[modo]}
-        >
-          <span
-            aria-hidden="true"
-            className="absolute inset-y-1 left-1 w-20 rounded-full bg-muted transition-transform duration-200 ease-in-out motion-reduce:transition-none"
-            style={{ transform: `translateX(${modo === 'anio' ? 100 : 0}%)` }}
-          />
-          {OPCIONES_MODO.map((opcion) => (
-            <ToggleGroupItem
-              key={opcion.valor}
-              value={opcion.valor}
-              className="relative w-20 rounded-full text-muted-foreground hover:bg-transparent aria-pressed:bg-black aria-pressed:text-primary"
-            >
-              {opcion.texto}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </div>
-
-      <div className="mt-3 flex items-center justify-between gap-4">
-        <Popover>
-          <PopoverTrigger
-            render={
-              <Button type="button" variant="outline">
-                <ListFilterIcon />
-                Categorías {elegidas.length}/{lista.length}
-                <ChevronDownIcon />
-              </Button>
-            }
-          ></PopoverTrigger>
-          <PopoverContent align="start" className="gap-2">
-            <div className="flex items-center justify-between">
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                onClick={elegirTodas}
-              >
-                Todas
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                onClick={elegirNinguna}
-              >
-                Ninguna
-              </Button>
-            </div>
-            <div className="-mx-2 max-h-60 overflow-y-auto">
-              {lista.map((c) => (
-                <label
-                  key={c.categoriaId}
-                  className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted"
+        <div className="contents lg:mt-3 lg:flex lg:items-center lg:justify-between lg:gap-4">
+          <Popover>
+            <PopoverTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="col-start-1 row-start-2 justify-self-start"
                 >
-                  <Checkbox
-                    checked={seleccion.has(c.categoriaId)}
-                    onCheckedChange={() => alternar(c.categoriaId)}
-                  />
-                  <span className="flex-1 truncate">{c.nombre}</span>
-                  <span
-                    className={cn(
-                      'text-xs',
-                      c.exceso !== null && Number(c.exceso) > 0
-                        ? 'text-destructive'
-                        : 'text-muted-foreground',
-                    )}
+                  <ListFilterIcon />
+                  <span className="hidden lg:inline">Categorías</span>
+                  {elegidas.length}/{lista.length}
+                  <ChevronDownIcon />
+                </Button>
+              }
+            ></PopoverTrigger>
+            <PopoverContent align="start" className="gap-2">
+              <div className="flex items-center justify-between">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={elegirTodas}
+                >
+                  Todas
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={elegirNinguna}
+                >
+                  Ninguna
+                </Button>
+              </div>
+              <div className="-mx-2 max-h-60 overflow-y-auto">
+                {lista.map((c) => (
+                  <label
+                    key={c.categoriaId}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted"
                   >
-                    {formatearMonto(c.importe)}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
+                    <Checkbox
+                      checked={seleccion.has(c.categoriaId)}
+                      onCheckedChange={() => alternar(c.categoriaId)}
+                    />
+                    <span className="flex-1 truncate">{c.nombre}</span>
+                    <span
+                      className={cn(
+                        'text-xs',
+                        c.exceso !== null && Number(c.exceso) > 0
+                          ? 'text-destructive'
+                          : 'text-muted-foreground',
+                      )}
+                    >
+                      {formatearMonto(c.importe)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
 
-        {modo === 'periodo' && (
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm bg-primary" />
-              Dentro del límite
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm bg-destructive" />
-              Lo que te pasas
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-3 w-0.5 bg-foreground" />
-              Límite
-            </span>
-          </div>
-        )}
+          {modo === 'periodo' && (
+            <div className="col-span-2 flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <span className="size-2.5 rounded-sm bg-primary" />
+                Dentro<span className="hidden lg:inline"> del límite</span>
+              </span>
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <span className="size-2.5 rounded-sm bg-destructive" />
+                <span className="lg:hidden">Exceso</span>
+                <span className="hidden lg:inline">Lo que te pasas</span>
+              </span>
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <span className="h-3 w-0.5 bg-foreground" />
+                Límite
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {lista.length === 0 ? (
@@ -426,18 +485,17 @@ export default function GraficoGastos({
                 layout="vertical"
                 data={barras}
                 barSize={GROSOR_BARRA}
-                margin={{ right: ANCHO_TEXTO }}
+                margin={{ right: esMovil ? 0 : ANCHO_TEXTO }}
               >
                 <XAxis type="number" domain={[0, maximo || 1]} hide />
                 <YAxis
+                  hide={esMovil}
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: 'var(--foreground)' }}
                   type="category"
                   width={120}
-                  tickFormatter={(nombre: string) =>
-                    nombre.length > 16 ? nombre.slice(0, 15) + '…' : nombre
-                  }
+                  tickFormatter={recortar}
                   dataKey="nombre"
                 />
                 <Bar
@@ -454,7 +512,7 @@ export default function GraficoGastos({
                   radius={[0, 6, 6, 0]}
                   isAnimationActive={false}
                 />
-                <Anotaciones barras={barras} />
+                <Anotaciones barras={barras} esMovil={esMovil} />
               </BarChart>
             </ChartContainer>
 

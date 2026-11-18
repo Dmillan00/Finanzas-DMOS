@@ -35,7 +35,7 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
         'dark',
       )}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col pb-24 lg:pb-0">
         <Toaster />
         <Navbar bd={bd} />
         {children}

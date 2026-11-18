@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { PANEL_MOVIL } from '@/libs/estilos';
 
 export default function EditarCuenta({ cuenta }: { cuenta: Cuenta }) {
   const [abierto, setAbierto] = useState(false);
@@ -29,7 +30,7 @@ export default function EditarCuenta({ cuenta }: { cuenta: Cuenta }) {
           </Button>
         }
       />
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className={PANEL_MOVIL}>
         <DialogHeader>
           <DialogTitle>
             Editar Cuenta: <span className="text-primary">{cuenta.nombre}</span>

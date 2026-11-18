@@ -24,6 +24,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { formatearFecha } from '@/libs/formatos';
 import { Calendar1Icon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useEsMovil } from '@/libs/useEsMovil';
+
+// Nombres de los 3 pasos del formulario en móvil
+const PASOS = ['Importe', 'Cuenta', 'Detalles'];
 
 export default function MovimientoForm({
   cuentas,
@@ -54,6 +59,13 @@ export default function MovimientoForm({
   const [tipo, setTipo] = useState<Tipo>(
     movimiento?.tipo ?? tipoInicial ?? 'GASTO',
   );
+
+  // Móvil: el formulario va en 3 pasos. Los campos de los otros pasos se
+  // ocultan con CSS (no se desmontan) para que lleguen al FormData. En PC (lg)
+  // se ve todo a la vez.
+  const [paso, setPaso] = useState(1);
+  const esMovil = useEsMovil();
+  const enPaso = (n: number) => (paso === n ? '' : 'hidden lg:flex');
   useEffect(() => {
     if (!state.message) {
       return;
@@ -97,9 +109,57 @@ export default function MovimientoForm({
 
   return (
     <div>
-      <form action={formAction}>
-        <FieldGroup className="grid grid-cols-3 gap-4">
-          <Field>
+      <form
+        action={formAction}
+        onKeyDown={(e) => {
+          // Móvil: Intro en un campo de los pasos 1-2 pasa al siguiente paso
+          // en vez de enviar el formulario (envío implícito de HTML).
+          if (
+            e.key === 'Enter' &&
+            esMovil &&
+            paso < 3 &&
+            e.target instanceof HTMLInputElement
+          ) {
+            e.preventDefault();
+            setPaso(paso + 1);
+          }
+        }}
+      >
+        {/* Móvil: pasos. Cada trozo es un botón que lleva a ese paso */}
+        <nav
+          aria-label="Pasos"
+          className="mb-5 grid grid-cols-3 gap-1.5 lg:hidden"
+        >
+          {PASOS.map((nombre, i) => {
+            const n = i + 1;
+            return (
+              <button
+                key={nombre}
+                type="button"
+                onClick={() => setPaso(n)}
+                aria-current={paso === n ? 'step' : undefined}
+                className="flex min-h-11 flex-col justify-center gap-1.5 text-left"
+              >
+                <span
+                  className={cn(
+                    'h-1 w-full rounded-full',
+                    n <= paso ? 'bg-primary' : 'bg-muted',
+                  )}
+                />
+                <span
+                  className={cn(
+                    'text-xs',
+                    paso === n ? 'text-foreground' : 'text-muted-foreground',
+                  )}
+                >
+                  {nombre}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+        <FieldGroup className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Field className={enPaso(3)}>
             <FieldLabel htmlFor="nombre">Nombre</FieldLabel>
             <Input
               id="nombre"
@@ -109,7 +169,7 @@ export default function MovimientoForm({
               placeholder="Mercadona"
             />
           </Field>
-          <Field>
+          <Field className={enPaso(1)}>
             <FieldLabel htmlFor="monto">Monto</FieldLabel>
             <Input
               id="monto"
@@ -120,7 +180,7 @@ export default function MovimientoForm({
               defaultValue={movimiento?.monto ?? ''}
             />
           </Field>
-          <Field>
+          <Field className={cn('order-first lg:order-none', enPaso(1))}>
             <FieldLabel htmlFor="tipo">Tipo</FieldLabel>
             <Select
               items={selectTipo}
@@ -149,7 +209,7 @@ export default function MovimientoForm({
             </Select>
           </Field>
 
-          <Field>
+          <Field className={enPaso(2)}>
             <FieldLabel htmlFor="cuentaBaseId">Cuenta</FieldLabel>
             <Select
               items={selectCuenta}
@@ -170,7 +230,7 @@ export default function MovimientoForm({
               </SelectContent>
             </Select>
           </Field>
-          <Field>
+          <Field className={enPaso(2)}>
             {tipo === 'TRANSFERENCIA' ? (
               <>
                 <FieldLabel htmlFor="cuentaDestinoId">
@@ -223,7 +283,7 @@ export default function MovimientoForm({
               </>
             )}
           </Field>
-          <Field>
+          <Field className={enPaso(3)}>
             <FieldLabel htmlFor="fecha">Fecha (Opcional)</FieldLabel>
             <Popover>
               <PopoverTrigger
@@ -255,7 +315,7 @@ export default function MovimientoForm({
               value={fecha ? format(fecha, 'yyyy-MM-dd') : ''}
             />
           </Field>
-          <Field className="col-span-3">
+          <Field className={cn('lg:col-span-3', enPaso(3))}>
             <FieldLabel htmlFor="nota">Nota (Opcional)</FieldLabel>
             <Input
               id="nota"
@@ -264,8 +324,12 @@ export default function MovimientoForm({
               defaultValue={movimiento?.nota ?? ''}
             />
           </Field>
-          <Field className=" col-start-3">
-            <Button type="submit" disabled={pending} className="font-bold ">
+          <Field className={cn('lg:col-start-3', enPaso(3))}>
+            <Button
+              type="submit"
+              disabled={pending}
+              className="mt-2 h-12 text-base font-bold lg:mt-0 lg:h-9 lg:text-sm"
+            >
               {textButton}
             </Button>
           </Field>
