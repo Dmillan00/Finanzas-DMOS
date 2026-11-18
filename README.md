@@ -11,7 +11,6 @@ Un solo PostgreSQL con dos BD: la **principal** (`POSTGRES_DB_MAIN`, datos reale
 | Puerto      | Servicio        | Modo                                      |
 | ----------- | --------------- | ----------------------------------------- |
 | 8014        | Client          | Uso normal (Docker Compose, BD principal) |
-| 8013        | Server          | Uso normal ¹                              |
 | 8012 / 8010 | Client / Server | Desarrollo (npm, BD de desarrollo)        |
 | 8011        | PostgreSQL      | Ambos ¹                                   |
 
@@ -26,12 +25,12 @@ cd Finanzas-DMOS
 
 Copia cada `.example` y rellénalo. Los `.env` no se suben al repo.
 
-| Archivo                       | Variables                                                                                                                                                                                                                      |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `.env`                        | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_DB_MAIN`, `DB_PORT=8011`, `SERVER_PORT_MAIN=8013`, `CLIENT_PORT_MAIN=8014`, `BACKUP_DIR` (carpeta de backups fuera del repo, p. ej. `../Respaldo/FinanzasDMOS`) |
-| `server/.env`                 | `DATABASE_URL` (BD de desarrollo en `localhost:8011`; en Docker la sobrescribe el compose), `PORT=8010`, `CORS_ORIGIN=http://localhost:8012`, `DIA_COBRO` (1–28). **Obligatorio también con Docker**                           |
-| `client/.env.local`           | `API_URL=http://localhost:8010`. Solo para desarrollo                                                                                                                                                                          |
-| `docker-compose.override.yml` | Copia de `docker-compose.override.example.yml`: publica PostgreSQL y el server. Solo en el PC ⚠️ no lo crees en un servidor                                                                                                    |
+| Archivo                       | Variables                                                                                                                                                                                             |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.env`                        | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_DB_MAIN`, `DB_PORT=8011`, `CLIENT_PORT_MAIN=8014`, `BACKUP_DIR` (carpeta de backups fuera del repo, p. ej. `../Respaldo/FinanzasDMOS`) |
+| `server/.env`                 | `DATABASE_URL` (BD de desarrollo en `localhost:8011`; en Docker la sobrescribe el compose), `PORT=8010`, `CORS_ORIGIN=http://localhost:8012`, `DIA_COBRO` (1–28). **Obligatorio también con Docker**  |
+| `client/.env.local`           | `API_URL=http://localhost:8010`. Solo para desarrollo                                                                                                                                                 |
+| `docker-compose.override.yml` | Copia de `docker-compose.override.example.yml`: publica PostgreSQL. Solo en el PC ⚠️ no lo crees en un servidor                                                                                       |
 
 > Los valores de los `.example` son de ejemplo (puertos incluidos): usa los de esta tabla.
 

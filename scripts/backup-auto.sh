@@ -27,14 +27,12 @@ while true; do
     espera="$INTERVALO"
     # Solo los diarios (????-??-??)
     find "$DESTINO" -maxdepth 1 -name "${PGDATABASE}_????-??-??.dump" \
-    -mtime +"$RETENCION_DIAS" -delete
+      -mtime +"$RETENCION_DIAS" -delete
   else
     rm -f "$tmp"
     echo "$(date '+%F %T') ERROR: el backup ha fallado" >&2
     espera="$REINTENTO"
   fi
-
-  
 
   sleep "$espera"
 done
