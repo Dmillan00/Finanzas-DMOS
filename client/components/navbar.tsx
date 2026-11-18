@@ -72,7 +72,7 @@ export default function Navbar({ bd }: { bd: string | null }) {
       </div>
 
       <NavigationMenu className="fixed inset-x-3 bottom-4 z-50 max-w-none lg:static lg:max-w-max">
-        <NavigationMenuList className="relative rounded-full border p-1 w-full">
+        <NavigationMenuList className="relative rounded-full border p-1 bg-background/90 backdrop-blur-md  lg:bg-transparent lg:backdrop-blur-none w-full">
           <li
             aria-hidden="true"
             className="absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/4)] lg:w-32 rounded-full bg-muted transition-[transform,opacity] duration-200 ease-(--ease-in-out) motion-reduce:transition-none"
