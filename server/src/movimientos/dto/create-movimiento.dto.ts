@@ -7,7 +7,6 @@ import {
   IsOptional,
   IsPositive,
   IsString,
-  ValidateIf,
 } from 'class-validator';
 import { TipoMovimiento } from '../../generated/prisma/enums.js';
 

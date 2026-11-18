@@ -36,7 +36,7 @@ function estiloBd(bd: string | null) {
     return { texto: 'BD ?', variant: 'destructive' as const };
   }
   if (bd === 'finanzas_main') {
-    return { texto: 'main', variant: 'secondary' as const };
+    return null;
   }
   return {
     texto: 'dev',
@@ -48,14 +48,16 @@ function estiloBd(bd: string | null) {
 export default function Navbar({ bd }: { bd: string | null }) {
   const path = usePathname();
   const indice = enlaces.findIndex((item) => item.href === path);
-  const { texto, variant, clases } = estiloBd(bd);
+  const estilo = estiloBd(bd);
   return (
     <header className="flex items-center mx-auto w-full justify-between px-5 py-2 max-w-7xl">
       <div className="flex items-center gap-3">
         <h2 className="text-2xl">Finanzas DMOS</h2>
-        <Badge variant={variant} className={clases}>
-          {texto}
-        </Badge>
+        {estilo && (
+          <Badge variant={estilo.variant} className={estilo.clases}>
+            {estilo.texto}
+          </Badge>
+        )}
       </div>
 
       <NavigationMenu>
