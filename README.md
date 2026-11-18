@@ -32,14 +32,12 @@ Copia cada `.example` y rellénalo. Los `.env` no se suben al repo.
 | `client/.env.local`           | `API_URL=http://localhost:8010`. Solo para desarrollo                                                                                                                                                 |
 | `docker-compose.override.yml` | Copia de `docker-compose.override.example.yml`: publica PostgreSQL. Solo en el PC ⚠️ no lo crees en un servidor                                                                                       |
 
-> Los valores de los `.example` son de ejemplo (puertos incluidos): usa los de esta tabla.
-
 ## Uso normal (Docker Compose)
 
 ```bash
 docker compose up -d postgres
 # Solo la primera vez: crear la BD principal (sin ella el server no arranca)
-docker exec -it finanzas_dmos_db psql -U <POSTGRES_USER> -d postgres -c "CREATE DATABASE <POSTGRES_DB_MAIN>;"
+docker compose exec postgres createdb -U <POSTGRES_USER> <POSTGRES_DB_MAIN>
 docker compose up -d --build   # http://localhost:8014
 docker compose down            # parar
 ```

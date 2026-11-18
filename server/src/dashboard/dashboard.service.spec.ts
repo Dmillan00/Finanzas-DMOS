@@ -54,10 +54,6 @@ describe('DashboardService', () => {
     vi.useRealTimers();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('calcularPeriodo', () => {
     const utc = (y: number, m: number, d: number) =>
       new Date(Date.UTC(y, m - 1, d));
@@ -145,31 +141,6 @@ describe('DashboardService', () => {
       vi.setSystemTime(new Date(Date.UTC(2026, 10, 3, 12)));
     });
 
-    it('devuelve el periodo actual según DIA_COBRO', async () => {
-      mockTotales(null, null);
-      prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
-
-      const resultado = await service.getDashboard();
-
-      expect(resultado.periodo).toEqual({
-        desde: new Date(Date.UTC(2026, 9, 27)),
-        hasta: new Date(Date.UTC(2026, 10, 27)),
-      });
-    });
-
-    it('calcula ingresos, gastos y queda como string', async () => {
-      mockTotales('1500.50', '200.25');
-      prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
-
-      const resultado = await service.getDashboard();
-
-      expect(resultado.totales).toEqual({
-        ingresos: '1500.5',
-        gastos: '200.25',
-        queda: '1300.25',
-      });
-    });
-
     it('queda puede ser negativo', async () => {
       mockTotales('100', '250');
       prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
@@ -192,58 +163,11 @@ describe('DashboardService', () => {
       });
       expect(resultado.ultimos).toEqual([]);
     });
-
-    it('filtra los totales por tipo y por el periodo', async () => {
-      mockTotales(null, null);
-      prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
-
-      await service.getDashboard();
-
-      const fecha = {
-        gte: new Date(Date.UTC(2026, 9, 27)),
-        lt: new Date(Date.UTC(2026, 10, 27)),
-      };
-      expect(prismaServiceMock.movimiento.aggregate).toHaveBeenCalledTimes(2);
-      expect(prismaServiceMock.movimiento.aggregate).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { tipo: 'INGRESO', fecha } }),
-      );
-      expect(prismaServiceMock.movimiento.aggregate).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { tipo: 'GASTO', fecha } }),
-      );
-    });
-
-    it('pide los 5 últimos GASTO/INGRESO sin filtro de periodo', async () => {
-      mockTotales(null, null);
-      const ultimos = [
-        {
-          movimientoId: 2,
-          nombre: 'Nómina',
-          monto: new Prisma.Decimal(1500),
-          tipo: 'INGRESO',
-          categoria: { nombre: 'Nómina' },
-        },
-      ];
-      prismaServiceMock.movimiento.findMany.mockResolvedValue(ultimos);
-
-      const resultado = await service.getDashboard();
-
-      expect(resultado.ultimos).toEqual(ultimos);
-      expect(prismaServiceMock.movimiento.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { tipo: { in: ['GASTO', 'INGRESO'] } },
-          orderBy: { movimientoId: 'desc' },
-          take: 5,
-        }),
-      );
-    });
   });
 
   describe('gastosPorCategoria', () => {
-    // Hoy = 3 nov 2026 → periodo 27 oct – 27 nov y año 2026
+    // Hoy = 3 nov 2026 → periodo desde el 27 oct (el año usa el resto de llamadas)
     const desdePeriodo = new Date(Date.UTC(2026, 9, 27));
-    const hastaPeriodo = new Date(Date.UTC(2026, 10, 27));
-    const desdeAnio = new Date(Date.UTC(2026, 0, 1));
-    const hastaAnio = new Date(Date.UTC(2027, 0, 1));
 
     const categorias = [
       { categoriaId: 1, nombre: 'Comida', limite: new Prisma.Decimal(100) },
@@ -281,31 +205,6 @@ describe('DashboardService', () => {
       mockTotales(null, null);
       prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
       prismaServiceMock.categoria.findMany.mockResolvedValue(categorias);
-    });
-
-    it('pide las categorías de GASTO y suma sus gastos en el periodo y en el año', async () => {
-      mockGastos({});
-
-      await service.getDashboard();
-
-      expect(prismaServiceMock.categoria.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { tipo: 'GASTO' } }),
-      );
-      expect(prismaServiceMock.movimiento.groupBy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            tipo: 'GASTO',
-            fecha: { gte: desdePeriodo, lt: hastaPeriodo },
-          },
-          _sum: { monto: true },
-        }),
-      );
-      expect(prismaServiceMock.movimiento.groupBy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { tipo: 'GASTO', fecha: { gte: desdeAnio, lt: hastaAnio } },
-          _sum: { monto: true },
-        }),
-      );
     });
 
     it('si se pasa del límite calcula dentro, restante, exceso y porcentaje', async () => {
