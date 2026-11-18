@@ -3,8 +3,7 @@
 # Corre dentro del servicio "backup" del docker-compose (imagen postgres:17).
 #
 # pg_dump lee la conexion de PGHOST, PGUSER, PGPASSWORD y PGDATABASE.
-# Mismo nombre que backup.ps1 (<bd>_AAAA-MM-DD.dump), para que
-# verificar.ps1 y restore.ps1 lo encuentren como el mas reciente.
+# Nombre: <bd>_AAAA-MM-DD.dump (un archivo por dia).
 
 set -u
 
