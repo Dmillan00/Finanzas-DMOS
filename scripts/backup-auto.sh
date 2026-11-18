@@ -10,6 +10,11 @@ set -u
 DESTINO=/backups
 RETENCION_DIAS=28
 INTERVALO=86400 # 24 h
+REINTENTO=300  # 5 min
+
+while ! pg_isready -q; do
+  sleep 5s
+done
 
 while true; do
   archivo="$DESTINO/${PGDATABASE}_$(date +%F).dump"
@@ -19,14 +24,17 @@ while true; do
   if pg_dump -Fc -f "$tmp" && [ -s "$tmp" ]; then
     mv "$tmp" "$archivo"
     echo "$(date '+%F %T') Backup OK: $(basename "$archivo")"
+    espera="$INTERVALO"
+    # Solo los diarios (????-??-??)
+    find "$DESTINO" -maxdepth 1 -name "${PGDATABASE}_????-??-??.dump" \
+    -mtime +"$RETENCION_DIAS" -delete
   else
     rm -f "$tmp"
     echo "$(date '+%F %T') ERROR: el backup ha fallado" >&2
+    espera="$REINTENTO"
   fi
 
-  # Solo los diarios (????-??-??): no toca los _antes-restore.
-  find "$DESTINO" -maxdepth 1 -name "${PGDATABASE}_????-??-??.dump" \
-    -mtime +"$RETENCION_DIAS" -delete
+  
 
-  sleep "$INTERVALO"
+  sleep "$espera"
 done
