@@ -93,7 +93,7 @@ export default function Navbar({ bd }: { bd: string | null }) {
             return (
               <NavigationMenuItem
                 key={item.href}
-                className="flex-1 lg:w-32 lg:flex-none"
+                className="min-w-0 flex-1 lg:w-32 lg:flex-none"
               >
                 <NavigationMenuLink
                   className="justify-center flex-col text-xs lg:text-sm px-1 lg:px-4 lg:flex-row rounded-full  py-2 text-muted-foreground transition-[color,transform] duration-200 ease-(--ease-out) active:scale-[0.97] data-active:text-primary"
@@ -101,7 +101,14 @@ export default function Navbar({ bd }: { bd: string | null }) {
                   active={path === item.href}
                 >
                   <Icono className="size-4 lg:hidden" />
-                  {item.label}
+                  {/* Móvil: solo icono; el nombre se ve en la activa (y lo lee el lector de pantalla siempre) */}
+                  <span
+                    className={
+                      path === item.href ? undefined : 'sr-only lg:not-sr-only'
+                    }
+                  >
+                    {item.label}
+                  </span>
                 </NavigationMenuLink>
               </NavigationMenuItem>
             );
