@@ -42,6 +42,17 @@ export class DeudasController {
     }
   }
 
+  // Resumen con los totales (antes de ':id' para que no lo capture)
+  @Get('resumen')
+  async getResumen() {
+    try {
+      return await this.deudasService.resumen();
+    } catch (error) {
+      console.error('Error al obtener el resumen de las deudas:', error);
+      throw error;
+    }
+  }
+
   //Obtener una deuda
   @Get(':id')
   async getOne(@Param('id', ParseIntPipe) id: number) {

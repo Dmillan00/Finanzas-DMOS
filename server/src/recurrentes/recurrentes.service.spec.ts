@@ -14,6 +14,7 @@ describe('RecurrentesService', () => {
     recurrente: {
       create: vi.fn(),
       findUnique: vi.fn(),
+      findMany: vi.fn(),
       update: vi.fn(),
     },
     categoria: {
@@ -21,6 +22,10 @@ describe('RecurrentesService', () => {
     },
     movimiento: {
       create: vi.fn(),
+      aggregate: vi.fn(),
+    },
+    deuda: {
+      findUnique: vi.fn(),
     },
     $transaction: vi.fn(),
   };
@@ -44,6 +49,7 @@ describe('RecurrentesService', () => {
     periodicidad: Periodicidad.MENSUAL,
     proximaFecha: new Date(Date.UTC(2026, 0, 31)),
     esSuscripcion: false,
+    activo: true,
     deudaId: 5,
     cuentaId: 1,
     categoriaId: 1,
@@ -61,6 +67,15 @@ describe('RecurrentesService', () => {
           ) ?? null,
         ),
     );
+
+    // Deuda 5: 3000 € con 250 € pagados → quedan 2750 €
+    prismaServiceMock.deuda.findUnique.mockResolvedValue({
+      deudaId: 5,
+      montoTotal: 3000,
+    });
+    prismaServiceMock.movimiento.aggregate.mockResolvedValue({
+      _sum: { monto: 250 },
+    });
 
     // La transacción en forma de array: resuelve las operaciones en orden
     prismaServiceMock.$transaction.mockImplementation((ops: unknown[]) =>
@@ -128,7 +143,33 @@ describe('RecurrentesService', () => {
     });
   });
 
+  describe('resumen', () => {
+    it('suma las suscripciones al mes con las anuales ÷ 12', async () => {
+      prismaServiceMock.recurrente.findMany.mockResolvedValue([
+        { monto: 13.99, periodicidad: Periodicidad.MENSUAL },
+        { monto: 49.9, periodicidad: Periodicidad.ANUAL },
+      ]);
+
+      const resultado = await service.resumen();
+
+      // 13,99 + 49,90 / 12 = 18,148… → 18,15
+      expect(resultado.suscripcionesMes).toBe('18.15');
+    });
+  });
+
   describe('registrarPago', () => {
+    it('lanza BadRequestException si está pausado y no crea nada', async () => {
+      prismaServiceMock.recurrente.findUnique.mockResolvedValue({
+        ...recurrenteBase,
+        activo: false,
+      });
+
+      await expect(service.registrarPago(1)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prismaServiceMock.$transaction).not.toHaveBeenCalled();
+    });
+
     it('MENSUAL del 31 de enero pasa al 28 de febrero', async () => {
       prismaServiceMock.recurrente.findUnique.mockResolvedValue(recurrenteBase);
 
@@ -148,6 +189,27 @@ describe('RecurrentesService', () => {
           data: { proximaFecha: new Date(Date.UTC(2026, 1, 28)) },
         }),
       );
+    });
+
+    it('usa el monto del body si viene (nómina variable)', async () => {
+      prismaServiceMock.recurrente.findUnique.mockResolvedValue(recurrenteBase);
+
+      await service.registrarPago(1, { monto: 1543.2 });
+
+      expect(prismaServiceMock.movimiento.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ monto: 1543.2 }),
+        }),
+      );
+    });
+
+    it('lanza BadRequestException si el pago supera lo pendiente de la deuda', async () => {
+      prismaServiceMock.recurrente.findUnique.mockResolvedValue(recurrenteBase);
+
+      await expect(service.registrarPago(1, { monto: 2800 })).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prismaServiceMock.$transaction).not.toHaveBeenCalled();
     });
 
     it('ANUAL del 29 de febrero pasa al 28 de febrero del año siguiente', async () => {

@@ -4,8 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import {
+  cerrarSiSaldada,
+  comprobarPagoDeuda,
+} from '../deudas/deudas.reglas.js';
 import { CreateRecurrenteDto } from './dto/create-recurrente.dto.js';
 import { UpdateRecurrenteDto } from './dto/update-recurrente.dto.js';
+import { RegistrarPagoDto } from './dto/registrar-pago.dto.js';
+import { importeMensual } from './importe-mensual.js';
 import {
   Categoria,
   Periodicidad,
@@ -69,6 +75,24 @@ export class RecurrentesService {
       }
       throw error;
     }
+  }
+
+  // Total de suscripciones al mes (activas y de GASTO; anuales ÷ 12)
+  async resumen() {
+    const suscripciones = await this.prisma.recurrente.findMany({
+      where: {
+        activo: true,
+        esSuscripcion: true,
+        tipo: TipoMovimientoCategoria.GASTO,
+      },
+    });
+
+    const suscripcionesMes = suscripciones.reduce(
+      (suma, r) => suma.plus(importeMensual(r)),
+      new Prisma.Decimal(0),
+    );
+
+    return { suscripcionesMes: suscripcionesMes.toFixed(2) };
   }
 
   //Obtener todos los recurrentes
@@ -197,14 +221,25 @@ export class RecurrentesService {
   }
 
   //Registrar pago de un recurrente
-  async registrarPago(id: number) {
+  // El monto del body es opcional: si no viene, se usa el del recurrente
+  async registrarPago(id: number, dto?: RegistrarPagoDto) {
     const recurrente = await this.findOne(id);
+
+    if (!recurrente.activo) {
+      throw new BadRequestException('El recurrente está pausado');
+    }
+
+    const monto = dto?.monto ?? recurrente.monto;
+
+    if (recurrente.deudaId != null) {
+      await comprobarPagoDeuda(this.prisma, recurrente.deudaId, monto);
+    }
 
     const [movimiento, actualizado] = await this.prisma.$transaction([
       this.prisma.movimiento.create({
         data: {
           nombre: recurrente.nombre,
-          monto: recurrente.monto,
+          monto,
           tipo: recurrente.tipo,
           cuentaBaseId: recurrente.cuentaId,
           categoriaId: recurrente.categoriaId,
@@ -223,6 +258,11 @@ export class RecurrentesService {
         include: { categoria: true },
       }),
     ]);
+
+    // Si era la última cuota, la deuda queda saldada y se pausa este recurrente
+    if (recurrente.deudaId != null) {
+      await cerrarSiSaldada(this.prisma, recurrente.deudaId);
+    }
 
     return { movimiento, recurrente: actualizado };
   }

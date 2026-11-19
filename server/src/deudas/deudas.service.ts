@@ -7,22 +7,73 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateDeudaDto } from './dto/create-deuda.dto.js';
 import { UpdateDeudaDto } from './dto/update-deuda.dto.js';
 import { Deuda, Prisma } from '../generated/prisma/client.js';
+import { importeMensual } from '../recurrentes/importe-mensual.js';
 
 @Injectable()
 export class DeudasService {
   private readonly prisma: PrismaService;
 
-  // Pendiente = montoTotal − suma de los movimientos ligados a la deuda
+  // Pendiente = montoTotal − suma de los movimientos ligados a la deuda.
+  // Todo se calcula aquí con Decimal: el front no hace cuentas.
   private async addPendiente(deuda: Deuda) {
     const pagos = await this.prisma.movimiento.aggregate({
       where: { deudaId: deuda.deudaId },
       _sum: { monto: true },
     });
 
+    const total = new Prisma.Decimal(deuda.montoTotal);
     const pagado = pagos._sum.monto ?? new Prisma.Decimal(0);
-    const pendiente = new Prisma.Decimal(deuda.montoTotal).minus(pagado);
+    // Nunca negativo (un pago de más anterior a la regla cuenta como saldada)
+    const pendiente = Prisma.Decimal.max(0, total.minus(pagado));
+    const porcentaje = total.isZero()
+      ? new Prisma.Decimal(0)
+      : Prisma.Decimal.min(100, pagado.div(total).times(100)).toDecimalPlaces(
+          0,
+        );
 
-    return { ...deuda, pagado, pendiente };
+    return {
+      ...deuda,
+      pagado,
+      pendiente,
+      porcentaje,
+      saldada: pendiente.isZero(),
+    };
+  }
+
+  // Totales de la pestaña Deudas: lo pendiente, lo pagado y las cuotas al mes
+  async resumen() {
+    const deudas = await this.findAll();
+
+    let total = new Prisma.Decimal(0);
+    let pagado = new Prisma.Decimal(0);
+    let pendiente = new Prisma.Decimal(0);
+    for (const deuda of deudas) {
+      total = total.plus(deuda.montoTotal);
+      pagado = pagado.plus(deuda.pagado);
+      pendiente = pendiente.plus(deuda.pendiente);
+    }
+
+    // Cuotas = recurrentes activos enlazados a una deuda
+    const cuotas = await this.prisma.recurrente.findMany({
+      where: { activo: true, deudaId: { not: null } },
+    });
+    const cuotasMes = cuotas.reduce(
+      (suma, r) => suma.plus(importeMensual(r)),
+      new Prisma.Decimal(0),
+    );
+
+    const porcentaje = total.isZero()
+      ? new Prisma.Decimal(0)
+      : Prisma.Decimal.min(100, pagado.div(total).times(100));
+
+    return {
+      numDeudas: deudas.length,
+      total: total.toFixed(2),
+      pagado: pagado.toFixed(2),
+      pendiente: pendiente.toFixed(2),
+      porcentaje: porcentaje.toFixed(0),
+      cuotasMes: cuotasMes.toFixed(2),
+    };
   }
 
   constructor(prisma: PrismaService) {

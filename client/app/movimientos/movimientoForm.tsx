@@ -2,7 +2,13 @@
 
 import { useActionState, useState, useEffect } from 'react';
 import { crearMovimiento, editarMovimiento } from './actions';
-import type { Cuenta, Categoria, Movimiento, Tipo } from '@/components/props';
+import type {
+  Cuenta,
+  Categoria,
+  Deuda,
+  Movimiento,
+  Tipo,
+} from '@/components/props';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +32,7 @@ import { formatearFecha } from '@/libs/formatos';
 import { Calendar1Icon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEsMovil } from '@/libs/useEsMovil';
+import AvisoDeuda, { seExcede } from '@/components/avisoDeuda';
 
 // Nombres de los 3 pasos del formulario en móvil
 const PASOS = ['Importe', 'Cuenta', 'Detalles'];
@@ -36,12 +43,16 @@ export default function MovimientoForm({
   movimiento,
   onExito,
   tipoInicial,
+  deudas = [],
+  deudaInicial,
 }: {
   cuentas: Cuenta[];
   categorias: Categoria[];
   movimiento?: Movimiento;
   tipoInicial?: Tipo;
   onExito?: () => void;
+  deudas?: Deuda[];
+  deudaInicial?: number;
 }) {
   const accion = movimiento
     ? editarMovimiento.bind(null, movimiento.movimientoId)
@@ -64,6 +75,11 @@ export default function MovimientoForm({
   // ocultan con CSS (no se desmontan) para que lleguen al FormData. En PC (lg)
   // se ve todo a la vez.
   const [paso, setPaso] = useState(1);
+  const [monto, setMonto] = useState(movimiento?.monto ?? '');
+  const deudaPorDefecto = movimiento?.deudaId ?? deudaInicial;
+  const [deudaSel, setDeudaSel] = useState(
+    deudaPorDefecto ? String(deudaPorDefecto) : 'ninguna',
+  );
   const esMovil = useEsMovil();
   const enPaso = (n: number) => (paso === n ? '' : 'hidden lg:flex');
   useEffect(() => {
@@ -98,6 +114,33 @@ export default function MovimientoForm({
     label: categoria.nombre,
     value: categoria.categoriaId,
   }));
+
+  // Solo un GASTO puede pagar una deuda; 'ninguna' = sin deuda.
+  // Las saldadas no se ofrecen, salvo la que ya tenga este movimiento.
+  const deudasElegibles = deudas.filter(
+    (deuda) => !deuda.saldada || deuda.deudaId === movimiento?.deudaId,
+  );
+  const conDeuda = tipo === 'GASTO' && deudasElegibles.length > 0;
+  const selectDeuda = [
+    { label: 'Sin deuda', value: 'ninguna' },
+    ...deudasElegibles.map((deuda) => ({
+      label: deuda.nombre,
+      value: String(deuda.deudaId),
+    })),
+  ];
+
+  // Lo que se puede pagar como máximo: el pendiente, más el importe antiguo
+  // si se edita un pago de esa misma deuda (se sustituye)
+  const deudaElegida = conDeuda
+    ? deudas.find((deuda) => String(deuda.deudaId) === deudaSel)
+    : undefined;
+  const maximo = deudaElegida
+    ? Number(deudaElegida.pendiente) +
+      (movimiento?.deudaId === deudaElegida.deudaId
+        ? Number(movimiento.monto)
+        : 0)
+    : null;
+  const excedido = seExcede(monto, maximo);
 
   const textButton = movimiento
     ? pending
@@ -177,7 +220,8 @@ export default function MovimientoForm({
               type="number"
               step="0.01"
               placeholder="0,00€"
-              defaultValue={movimiento?.monto ?? ''}
+              value={monto}
+              onChange={(e) => setMonto(e.target.value)}
             />
           </Field>
           <Field className={cn('order-first lg:order-none', enPaso(1))}>
@@ -315,7 +359,45 @@ export default function MovimientoForm({
               value={fecha ? format(fecha, 'yyyy-MM-dd') : ''}
             />
           </Field>
-          <Field className={cn('lg:col-span-3', enPaso(3))}>
+          {conDeuda && (
+            <Field className={enPaso(3)}>
+              <FieldLabel htmlFor="deudaId">Deuda (Opcional)</FieldLabel>
+              <Select
+                items={selectDeuda}
+                name="deudaId"
+                value={deudaSel}
+                onValueChange={(value) => {
+                  if (value !== null) {
+                    setDeudaSel(value);
+                  }
+                }}
+              >
+                <SelectTrigger id="deudaId">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {selectDeuda.map((deuda) => (
+                      <SelectItem key={deuda.value} value={deuda.value}>
+                        {deuda.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <AvisoDeuda
+                monto={monto}
+                pendiente={maximo}
+                onAjustar={setMonto}
+              />
+            </Field>
+          )}
+          <Field
+            className={cn(
+              conDeuda ? 'lg:col-span-2' : 'lg:col-span-3',
+              enPaso(3),
+            )}
+          >
             <FieldLabel htmlFor="nota">Nota (Opcional)</FieldLabel>
             <Input
               id="nota"
@@ -327,7 +409,7 @@ export default function MovimientoForm({
           <Field className={cn('lg:col-start-3', enPaso(3))}>
             <Button
               type="submit"
-              disabled={pending}
+              disabled={pending || excedido}
               className="mt-2 h-12 text-base font-bold lg:mt-0 lg:h-9 lg:text-sm"
             >
               {textButton}

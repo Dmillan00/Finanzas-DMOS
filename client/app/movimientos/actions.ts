@@ -2,10 +2,12 @@
 
 import { apiPeticiones } from '@/libs/helper';
 import type { EstadoForm } from '@/libs/helper';
-const routes = ['/movimientos', '/cuentas', '/'];
+// /pagos: el pendiente de una deuda depende de sus movimientos
+const routes = ['/movimientos', '/cuentas', '/', '/pagos'];
 
-type BodyEditar = Omit<BodyMovimiento, 'tipo' | 'nota'> & {
+type BodyEditar = Omit<BodyMovimiento, 'tipo' | 'nota' | 'deudaId'> & {
   nota?: string | null;
+  deudaId?: number | null;
 };
 
 type BodyMovimiento = {
@@ -17,6 +19,7 @@ type BodyMovimiento = {
   cuentaDestinoId?: number;
   fecha?: string;
   nota?: string;
+  deudaId?: number;
 };
 
 export async function crearMovimiento(
@@ -87,6 +90,12 @@ export async function crearMovimiento(
     }
 
     baseDeMovimiento.cuentaDestinoId = destino;
+  }
+
+  // El select de deuda solo existe en GASTO; 'ninguna' = sin deuda
+  const deudaId = formData.get('deudaId');
+  if (typeof deudaId === 'string' && deudaId !== 'ninguna' && deudaId !== '') {
+    baseDeMovimiento.deudaId = Number(deudaId);
   }
 
   return apiPeticiones({
@@ -164,6 +173,13 @@ export async function editarMovimiento(
     }
 
     BaseEditarMovimiento.cuentaDestinoId = destino;
+  }
+
+  // Si el select de deuda está en el form: 'ninguna' desenlaza (null)
+  const deudaId = formdata.get('deudaId');
+  if (typeof deudaId === 'string' && deudaId !== '') {
+    BaseEditarMovimiento.deudaId =
+      deudaId === 'ninguna' ? null : Number(deudaId);
   }
 
   return apiPeticiones({

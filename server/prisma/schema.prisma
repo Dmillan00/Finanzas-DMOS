@@ -81,6 +81,7 @@ model Recurrente {
   periodicidad  Periodicidad
   proximaFecha  DateTime
   esSuscripcion Boolean                 @default(false)
+  activo        Boolean                 @default(true)
   deudaId       Int?
   cuentaId      Int
   categoriaId   Int

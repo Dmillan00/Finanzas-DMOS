@@ -40,6 +40,10 @@ export class CreateRecurrenteDto {
   @IsOptional()
   esSuscripcion?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  activo?: boolean;
+
   @IsInt()
   cuentaId: number;
 

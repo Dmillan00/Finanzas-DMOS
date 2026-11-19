@@ -13,6 +13,7 @@ import {
 import { RecurrentesService } from './recurrentes.service.js';
 import { CreateRecurrenteDto } from './dto/create-recurrente.dto.js';
 import { UpdateRecurrenteDto } from './dto/update-recurrente.dto.js';
+import { RegistrarPagoDto } from './dto/registrar-pago.dto.js';
 
 @Controller('recurrentes')
 export class RecurrentesController {
@@ -40,6 +41,17 @@ export class RecurrentesController {
       return await this.recurrentesService.findAll();
     } catch (error) {
       console.error('Error al obtener los recurrentes:', error);
+      throw error;
+    }
+  }
+
+  // Resumen con los totales (antes de ':id' para que no lo capture)
+  @Get('resumen')
+  async getResumen() {
+    try {
+      return await this.recurrentesService.resumen();
+    } catch (error) {
+      console.error('Error al obtener el resumen de los recurrentes:', error);
       throw error;
     }
   }
@@ -82,9 +94,12 @@ export class RecurrentesController {
 
   //Registrar pago de un recurrente
   @Post(':id/registrarPago')
-  async registrarPago(@Param('id', ParseIntPipe) id: number) {
+  async registrarPago(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RegistrarPagoDto,
+  ) {
     try {
-      return await this.recurrentesService.registrarPago(id);
+      return await this.recurrentesService.registrarPago(id, dto);
     } catch (error) {
       console.error('Error al registrar el pago del recurrente:', error);
       throw error;

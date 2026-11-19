@@ -1,6 +1,6 @@
 'use client';
 
-import type { Cuenta, Categoria, Movimiento } from '@/components/props';
+import type { Cuenta, Categoria, Deuda, Movimiento } from '@/components/props';
 import MovimientoForm from './movimientoForm';
 import {
   Dialog,
@@ -13,12 +13,14 @@ import { PANEL_MOVIL_ANCHO } from '@/libs/estilos';
 export default function EditarMovimiento({
   cuentas,
   categorias,
+  deudas,
   movimiento,
   abierto,
   onAbiertoChange,
 }: {
   cuentas: Cuenta[];
   categorias: Categoria[];
+  deudas?: Deuda[];
   movimiento: Movimiento;
   abierto: boolean;
   onAbiertoChange: (abierto: boolean) => void;
@@ -36,6 +38,7 @@ export default function EditarMovimiento({
           <MovimientoForm
             cuentas={cuentas}
             categorias={categorias}
+            deudas={deudas}
             movimiento={movimiento}
             onExito={() => onAbiertoChange(false)}
           />

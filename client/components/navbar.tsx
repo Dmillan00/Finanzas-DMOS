@@ -14,6 +14,7 @@ import {
   CreditCard,
   LayoutDashboard,
   type LucideIcon,
+  Repeat,
   Tag,
 } from 'lucide-react';
 const enlaces: { href: string; label: string; icono: LucideIcon }[] = [
@@ -39,6 +40,12 @@ const enlaces: { href: string; label: string; icono: LucideIcon }[] = [
     href: '/categorias',
     label: 'Categorias',
     icono: Tag,
+  },
+
+  {
+    href: '/pagos',
+    label: 'Pagos',
+    icono: Repeat,
   },
 ];
 
@@ -75,7 +82,7 @@ export default function Navbar({ bd }: { bd: string | null }) {
         <NavigationMenuList className="relative rounded-full border p-1 bg-background/90 backdrop-blur-md  lg:bg-transparent lg:backdrop-blur-none w-full">
           <li
             aria-hidden="true"
-            className="absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/4)] lg:w-32 rounded-full bg-muted transition-[transform,opacity] duration-200 ease-(--ease-in-out) motion-reduce:transition-none"
+            className="absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/5)] lg:w-32 rounded-full bg-muted transition-[transform,opacity] duration-200 ease-(--ease-in-out) motion-reduce:transition-none"
             style={{
               transform: `translateX(${Math.max(indice, 0) * 100}%)`,
               opacity: indice === -1 ? 0 : 1,

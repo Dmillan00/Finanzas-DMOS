@@ -4,6 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import {
+  cerrarSiSaldada,
+  comprobarPagoDeuda,
+} from '../deudas/deudas.reglas.js';
 import { CreateMovimientoDto } from './dto/create-movimiento.dto.js';
 import { UpdateMovimientoDto } from './dto/update-movimiento.dto.js';
 import {
@@ -92,14 +96,22 @@ export class MovimientosService {
       data.deudaId ?? null,
     );
 
+    if (data.deudaId != null) {
+      await comprobarPagoDeuda(this.prisma, data.deudaId, data.monto);
+    }
+
     const fechaDate = data.fecha ? new Date(data.fecha) : undefined;
     const datosPrisma = { ...data, fecha: fechaDate };
 
     try {
-      return await this.prisma.movimiento.create({
+      const movimiento = await this.prisma.movimiento.create({
         data: datosPrisma,
         include: { categoria: true },
       });
+      if (data.deudaId != null) {
+        await cerrarSiSaldada(this.prisma, data.deudaId);
+      }
+      return movimiento;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -209,15 +221,29 @@ export class MovimientosService {
       deudaId,
     );
 
+    if (deudaId != null) {
+      // Sin su importe antiguo: se sustituye por el nuevo
+      await comprobarPagoDeuda(
+        this.prisma,
+        deudaId,
+        data.monto ?? movimientoExistente.monto,
+        id,
+      );
+    }
+
     const fechaDate = data.fecha ? new Date(data.fecha) : undefined;
     const datosPrisma = { ...data, fecha: fechaDate };
 
     try {
-      return await this.prisma.movimiento.update({
+      const movimiento = await this.prisma.movimiento.update({
         where: { movimientoId: id },
         data: datosPrisma,
         include: { categoria: true },
       });
+      if (deudaId != null) {
+        await cerrarSiSaldada(this.prisma, deudaId);
+      }
+      return movimiento;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
