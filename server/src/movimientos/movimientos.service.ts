@@ -21,7 +21,12 @@ export class MovimientosService {
     base: number,
     categoria: Categoria | null,
     destino: number | null,
+    deudaId: number | null,
   ) {
+    if (deudaId != null && tipo !== TipoMovimiento.GASTO) {
+      throw new BadRequestException('Solo un GASTO puede pagar una deuda');
+    }
+
     if (tipo === TipoMovimiento.TRANSFERENCIA && destino == null) {
       throw new BadRequestException(
         `No se puede actuar sobre el movimiento de tipo TRANSFERENCIA sin una cuenta destino`,
@@ -84,6 +89,7 @@ export class MovimientosService {
       data.cuentaBaseId,
       categoria,
       data.cuentaDestinoId ?? null,
+      data.deudaId ?? null,
     );
 
     const fechaDate = data.fecha ? new Date(data.fecha) : undefined;
@@ -100,7 +106,7 @@ export class MovimientosService {
         error.code === 'P2003'
       ) {
         throw new BadRequestException(
-          `No se puede crear el movimiento porque la cuenta base, categoria o la cuenta destino no existe`,
+          `No se puede crear el movimiento porque la cuenta base, categoria, cuenta destino o deuda no existe`,
         );
       }
       throw error;
@@ -171,6 +177,9 @@ export class MovimientosService {
         ? data.cuentaDestinoId
         : movimientoExistente.cuentaDestinoId;
 
+    const deudaId =
+      data.deudaId !== undefined ? data.deudaId : movimientoExistente.deudaId;
+
     let categoria: Categoria | null = null;
 
     if (categoriaId != null) {
@@ -192,7 +201,13 @@ export class MovimientosService {
         `No se puede cambiar el tipo de movimiento de ${movimientoExistente.tipo} a ${data.tipo}`,
       );
     }
-    this.validarReglas(movimientoExistente.tipo, base, categoria, destino);
+    this.validarReglas(
+      movimientoExistente.tipo,
+      base,
+      categoria,
+      destino,
+      deudaId,
+    );
 
     const fechaDate = data.fecha ? new Date(data.fecha) : undefined;
     const datosPrisma = { ...data, fecha: fechaDate };
@@ -217,7 +232,7 @@ export class MovimientosService {
         error.code === 'P2003'
       ) {
         throw new BadRequestException(
-          `No se puede actualizar el movimiento porque la cuenta base, categoria o la cuenta destino no existe`,
+          `No se puede actualizar el movimiento porque la cuenta base, categoria, cuenta destino o deuda no existe`,
         );
       }
       throw error;

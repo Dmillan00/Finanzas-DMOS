@@ -105,6 +105,22 @@ describe('MovimientosService', () => {
         BadRequestException,
       );
     });
+
+    it('lanza BadRequestException si un INGRESO paga una deuda', async () => {
+      const dto = {
+        nombre: 'Devolución',
+        monto: 100,
+        tipo: TipoMovimiento.INGRESO,
+        cuentaBaseId: 1,
+        categoriaId: 2,
+        deudaId: 1,
+      };
+
+      await expect(service.createMovimiento(dto)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prismaServiceMock.movimiento.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('getMovimientos', () => {

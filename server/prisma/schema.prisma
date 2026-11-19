@@ -20,6 +20,7 @@ model Cuenta {
   saldoInicial  Decimal      @db.Decimal(10, 2)
   cuentaBase    Movimiento[] @relation("cuentaBase")
   cuentaDestino Movimiento[] @relation("cuentaDestino")
+  recurrentes   Recurrente[] @relation("cuentaRecurrente")
 }
 
 // Modelo de categoria
@@ -33,8 +34,9 @@ model Categoria {
   categoriaId Int                     @id @default(autoincrement())
   nombre      String
   tipo        TipoMovimientoCategoria
-  limite Decimal?  @db.Decimal(10, 2)
+  limite      Decimal?                @db.Decimal(10, 2)
   movimientos Movimiento[]            @relation("categoria")
+  recurrentes Recurrente[]            @relation("categoriaRecurrente")
 
   @@unique([nombre, tipo])
 }
@@ -57,7 +59,41 @@ model Movimiento {
   cuentaBaseId    Int
   cuentaDestinoId Int?
   categoriaId     Int?
+  deudaId         Int?
   categoria       Categoria?     @relation("categoria", fields: [categoriaId], references: [categoriaId], onDelete: Restrict)
   cuentaBase      Cuenta         @relation("cuentaBase", fields: [cuentaBaseId], references: [cuentaId])
   cuentaDestino   Cuenta?        @relation("cuentaDestino", fields: [cuentaDestinoId], references: [cuentaId], onDelete: Restrict)
+  deuda           Deuda?         @relation("pagos", fields: [deudaId], references: [deudaId], onDelete: Restrict)
+}
+
+// Modelo de Recurrente Subscripcion/pago recurrente
+
+enum Periodicidad {
+  MENSUAL
+  ANUAL
+}
+
+model Recurrente {
+  recurrenteId  Int                     @id @default(autoincrement())
+  nombre        String
+  monto         Decimal                 @db.Decimal(10, 2)
+  tipo          TipoMovimientoCategoria
+  periodicidad  Periodicidad
+  proximaFecha  DateTime
+  esSuscripcion Boolean                 @default(false)
+  deudaId       Int?
+  cuentaId      Int
+  categoriaId   Int
+  categoria     Categoria               @relation("categoriaRecurrente", fields: [categoriaId], references: [categoriaId], onDelete: Restrict)
+  cuenta        Cuenta                  @relation("cuentaRecurrente", fields: [cuentaId], references: [cuentaId], onDelete: Restrict)
+  deuda         Deuda?                  @relation("deuda", fields: [deudaId], references: [deudaId], onDelete: Restrict)
+}
+
+model Deuda {
+  deudaId    Int          @id @default(autoincrement())
+  nombre     String
+  montoTotal Decimal      @db.Decimal(10, 2)
+  nota       String?
+  pagos      Movimiento[] @relation("pagos")
+  recurrentes Recurrente[] @relation("deuda")
 }
