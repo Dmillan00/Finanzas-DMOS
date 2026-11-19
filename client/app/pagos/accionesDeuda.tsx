@@ -20,10 +20,61 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { PANEL_MOVIL, PANEL_MOVIL_ANCHO } from '@/libs/estilos';
 import { eliminarDeuda } from './actions';
 import DeudaForm from './deudaForm';
 import MovimientoForm from '../movimientos/movimientoForm';
+
+// Añadir pago = nuevo movimiento GASTO con la deuda ya elegida.
+// Se usa en la cabecera (PC) y al pie de la tarjeta (móvil).
+export function AnadirPago({
+  deuda,
+  deudas,
+  cuentas,
+  categorias,
+  className,
+}: {
+  deuda: Deuda;
+  deudas: Deuda[];
+  cuentas: Cuenta[];
+  categorias: Categoria[];
+  className?: string;
+}) {
+  const [abierto, setAbierto] = useState(false);
+
+  return (
+    <>
+      <Button
+        variant={'outline'}
+        size="sm"
+        className={cn('border-primary/50 text-primary', className)}
+        onClick={() => setAbierto(true)}
+      >
+        Añadir pago
+      </Button>
+      <Dialog open={abierto} onOpenChange={setAbierto}>
+        <DialogContent className={PANEL_MOVIL_ANCHO}>
+          <DialogHeader>
+            <DialogTitle>
+              Pago de: <span className="text-primary">{deuda.nombre}</span>
+            </DialogTitle>
+          </DialogHeader>
+          {abierto && (
+            <MovimientoForm
+              cuentas={cuentas}
+              categorias={categorias}
+              deudas={deudas}
+              tipoInicial="GASTO"
+              deudaInicial={deuda.deudaId}
+              onExito={() => setAbierto(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 
 export default function AccionesDeuda({
   deuda,
@@ -38,7 +89,6 @@ export default function AccionesDeuda({
   cuentas: Cuenta[];
   categorias: Categoria[];
 }) {
-  const [pagoAbierto, setPagoAbierto] = useState(false);
   const [editarAbierto, setEditarAbierto] = useState(false);
   const [eliminarAbierto, setEliminarAbierto] = useState(false);
   const [pendiente, startTransition] = useTransition();
@@ -57,16 +107,15 @@ export default function AccionesDeuda({
 
   return (
     <>
-      {/* Saldada: ya no admite pagos */}
+      {/* Saldada: ya no admite pagos. En móvil va abajo de la tarjeta */}
       {!saldada && (
-        <Button
-          variant={'outline'}
-          size="sm"
-          className="border-primary/50 text-primary"
-          onClick={() => setPagoAbierto(true)}
-        >
-          Añadir pago
-        </Button>
+        <AnadirPago
+          deuda={deuda}
+          deudas={deudas}
+          cuentas={cuentas}
+          categorias={categorias}
+          className="hidden lg:inline-flex"
+        />
       )}
 
       {/* PC: iconos */}
@@ -121,27 +170,6 @@ export default function AccionesDeuda({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      {/* Añadir pago = nuevo movimiento GASTO con la deuda ya elegida */}
-      <Dialog open={pagoAbierto} onOpenChange={setPagoAbierto}>
-        <DialogContent className={PANEL_MOVIL_ANCHO}>
-          <DialogHeader>
-            <DialogTitle>
-              Pago de: <span className="text-primary">{deuda.nombre}</span>
-            </DialogTitle>
-          </DialogHeader>
-          {pagoAbierto && (
-            <MovimientoForm
-              cuentas={cuentas}
-              categorias={categorias}
-              deudas={deudas}
-              tipoInicial="GASTO"
-              deudaInicial={deuda.deudaId}
-              onExito={() => setPagoAbierto(false)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={editarAbierto} onOpenChange={setEditarAbierto}>
         <DialogContent className={PANEL_MOVIL}>

@@ -17,6 +17,11 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import SelectorFecha from './selectorFecha';
+import { cn } from '@/lib/utils';
+import { useEsMovil } from '@/libs/useEsMovil';
+
+// Móvil: 3 pasos, como el formulario de movimiento
+const PASOS = ['Importe', 'Cuenta', 'Detalles'];
 
 const selectTipo = [
   { label: 'Gasto', value: 'GASTO' },
@@ -51,6 +56,12 @@ export default function RecurrenteForm({
   });
 
   const [tipo, setTipo] = useState<string>(recurrente?.tipo ?? 'GASTO');
+  // Móvil: los campos de otros pasos se ocultan con CSS (no se desmontan)
+  // para que lleguen al FormData. En PC (lg) se ve todo a la vez.
+  const [paso, setPaso] = useState(1);
+  const esMovil = useEsMovil();
+  const enPaso = (n: number) => (paso === n ? '' : 'hidden lg:flex');
+
   const [esSuscripcion, setEsSuscripcion] = useState(
     recurrente?.esSuscripcion ?? false,
   );
@@ -103,9 +114,56 @@ export default function RecurrenteForm({
       : 'Crear';
 
   return (
-    <form action={formAction}>
+    <form
+      action={formAction}
+      onKeyDown={(e) => {
+        // Móvil: Intro en los pasos 1-2 pasa al siguiente paso en vez de enviar
+        if (
+          e.key === 'Enter' &&
+          esMovil &&
+          paso < 3 &&
+          e.target instanceof HTMLInputElement
+        ) {
+          e.preventDefault();
+          setPaso(paso + 1);
+        }
+      }}
+    >
+      {/* Móvil: pasos. Cada trozo es un botón que lleva a ese paso */}
+      <nav
+        aria-label="Pasos"
+        className="mb-5 grid grid-cols-3 gap-1.5 lg:hidden"
+      >
+        {PASOS.map((nombre, i) => {
+          const n = i + 1;
+          return (
+            <button
+              key={nombre}
+              type="button"
+              onClick={() => setPaso(n)}
+              aria-current={paso === n ? 'step' : undefined}
+              className="flex min-h-11 flex-col justify-center gap-1.5 text-left"
+            >
+              <span
+                className={cn(
+                  'h-1 w-full rounded-full',
+                  n <= paso ? 'bg-primary' : 'bg-muted',
+                )}
+              />
+              <span
+                className={cn(
+                  'text-xs',
+                  paso === n ? 'text-foreground' : 'text-muted-foreground',
+                )}
+              >
+                {nombre}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
       <FieldGroup className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Field>
+        <Field className={enPaso(3)}>
           <FieldLabel htmlFor="nombre">Nombre</FieldLabel>
           <Input
             id="nombre"
@@ -115,7 +173,7 @@ export default function RecurrenteForm({
             placeholder="Netflix"
           />
         </Field>
-        <Field>
+        <Field className={enPaso(1)}>
           <FieldLabel htmlFor="monto">Importe</FieldLabel>
           <Input
             id="monto"
@@ -127,7 +185,7 @@ export default function RecurrenteForm({
           />
         </Field>
 
-        <Field>
+        <Field className={enPaso(1)}>
           <FieldLabel htmlFor="tipo">Tipo</FieldLabel>
           {recurrente ? (
             <p className="text-sm text-muted-foreground">
@@ -159,7 +217,7 @@ export default function RecurrenteForm({
             </Select>
           )}
         </Field>
-        <Field>
+        <Field className={enPaso(2)}>
           <FieldLabel htmlFor="periodicidad">Periodicidad</FieldLabel>
           <Select
             items={selectPeriodicidad}
@@ -181,7 +239,7 @@ export default function RecurrenteForm({
           </Select>
         </Field>
 
-        <Field>
+        <Field className={enPaso(2)}>
           <FieldLabel htmlFor="cuentaId">Cuenta</FieldLabel>
           <Select
             items={selectCuenta}
@@ -202,7 +260,7 @@ export default function RecurrenteForm({
             </SelectContent>
           </Select>
         </Field>
-        <Field>
+        <Field className={enPaso(2)}>
           <FieldLabel htmlFor="categoriaId">Categoría</FieldLabel>
           <Select
             items={selectCategoria}
@@ -225,7 +283,7 @@ export default function RecurrenteForm({
           </Select>
         </Field>
 
-        <Field>
+        <Field className={enPaso(3)}>
           <FieldLabel htmlFor="proximaFecha">Próximo pago</FieldLabel>
           <SelectorFecha
             id="proximaFecha"
@@ -234,7 +292,7 @@ export default function RecurrenteForm({
           />
         </Field>
         {tipo === 'GASTO' && (
-          <Field>
+          <Field className={enPaso(3)}>
             <FieldLabel htmlFor="deudaId">Deuda (Opcional)</FieldLabel>
             <Select
               items={selectDeuda}
@@ -259,7 +317,10 @@ export default function RecurrenteForm({
           </Field>
         )}
 
-        <Field orientation="horizontal" className="lg:col-span-2">
+        <Field
+          orientation="horizontal"
+          className={cn('lg:col-span-2', enPaso(3))}
+        >
           <Checkbox
             id="esSuscripcion"
             checked={esSuscripcion}
@@ -276,7 +337,10 @@ export default function RecurrenteForm({
         <Button
           type="submit"
           disabled={pending}
-          className="font-bold lg:col-span-2"
+          className={cn(
+            'mt-2 h-12 text-base font-bold lg:col-span-2 lg:mt-0 lg:h-9 lg:text-sm',
+            enPaso(3),
+          )}
         >
           {textButton}
         </Button>

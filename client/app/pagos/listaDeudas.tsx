@@ -9,7 +9,7 @@ import { CircleCheck, Landmark, Repeat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { formatearMonto, formatearPeriodo } from '@/libs/formatos';
-import AccionesDeuda from './accionesDeuda';
+import AccionesDeuda, { AnadirPago } from './accionesDeuda';
 
 export default function ListaDeudas({
   resumen,
@@ -192,6 +192,15 @@ export default function ListaDeudas({
                                 .join(' — ')}
                       </span>
                     </div>
+                    {!saldada && (
+                      <AnadirPago
+                        deuda={deuda}
+                        deudas={deudas}
+                        cuentas={cuentas}
+                        categorias={categorias}
+                        className="w-full lg:hidden"
+                      />
+                    )}
                   </article>
                 );
               })}

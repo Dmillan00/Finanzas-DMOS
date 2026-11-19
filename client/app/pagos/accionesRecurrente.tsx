@@ -186,97 +186,101 @@ export default function AccionesRecurrente({
 
   return (
     <>
-      {/* Acción principal: Pagar/Cobrar si está activo, Reactivar si no */}
-      {recurrente.activo ? (
-        <Button
-          variant={'outline'}
-          size="sm"
-          className="border-primary/50 text-primary"
-          onClick={() => setPagarAbierto(true)}
-        >
-          {verbo}
-        </Button>
-      ) : (
-        <Button
-          variant={'outline'}
-          size="sm"
-          onClick={() => setReactivarAbierto(true)}
-        >
-          <Play />
-          Reactivar
-        </Button>
-      )}
+      {/* Móvil: segunda línea de la fila (botón ancho + ⋮); PC: en línea */}
+      <div className="flex w-full items-center gap-2 lg:w-auto">
+        {/* Acción principal: Pagar/Cobrar si está activo, Reactivar si no */}
+        {recurrente.activo ? (
+          <Button
+            variant={'outline'}
+            size="sm"
+            className="flex-1 border-primary/50 text-primary lg:flex-none"
+            onClick={() => setPagarAbierto(true)}
+          >
+            {verbo}
+          </Button>
+        ) : (
+          <Button
+            variant={'outline'}
+            size="sm"
+            className="flex-1 lg:flex-none"
+            onClick={() => setReactivarAbierto(true)}
+          >
+            <Play />
+            Reactivar
+          </Button>
+        )}
 
-      {/* PC: iconos */}
-      <div className="hidden lg:flex">
-        {recurrente.activo && (
+        {/* PC: iconos */}
+        <div className="hidden lg:flex">
+          {recurrente.activo && (
+            <Button
+              variant={'ghost'}
+              className={'text-muted-foreground'}
+              size="icon-sm"
+              aria-label="Pausar"
+              title="Pausar"
+              disabled={pendiente}
+              onClick={pausar}
+            >
+              <Pause />
+            </Button>
+          )}
           <Button
             variant={'ghost'}
             className={'text-muted-foreground'}
             size="icon-sm"
-            aria-label="Pausar"
-            title="Pausar"
-            disabled={pendiente}
-            onClick={pausar}
+            aria-label="Editar"
+            onClick={() => setEditarAbierto(true)}
           >
-            <Pause />
+            <Pencil />
           </Button>
-        )}
-        <Button
-          variant={'ghost'}
-          className={'text-muted-foreground'}
-          size="icon-sm"
-          aria-label="Editar"
-          onClick={() => setEditarAbierto(true)}
-        >
-          <Pencil />
-        </Button>
-        <Button
-          variant={'ghost'}
-          className={'text-muted-foreground hover:text-destructive'}
-          size="icon-sm"
-          aria-label="Borrar"
-          onClick={() => setEliminarAbierto(true)}
-        >
-          <Trash />
-        </Button>
-      </div>
+          <Button
+            variant={'ghost'}
+            className={'text-muted-foreground hover:text-destructive'}
+            size="icon-sm"
+            aria-label="Borrar"
+            onClick={() => setEliminarAbierto(true)}
+          >
+            <Trash />
+          </Button>
+        </div>
 
-      {/* Móvil: menú ⋯ */}
-      <div className="lg:hidden">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant={'ghost'}
-                className={'text-muted-foreground'}
-                size="icon-sm"
-                aria-label="Opciones"
-              >
-                <MoreVertical />
-              </Button>
-            }
-          />
-          <DropdownMenuContent align="end">
-            {recurrente.activo && (
-              <DropdownMenuItem onClick={pausar} disabled={pendiente}>
-                <Pause />
-                Pausar
+        {/* Móvil: menú ⋯ */}
+        <div className="lg:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant={'ghost'}
+                  className={'text-muted-foreground'}
+                  size="icon-sm"
+                  aria-label="Opciones"
+                >
+                  <MoreVertical />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end">
+              {recurrente.activo && (
+                <DropdownMenuItem onClick={pausar} disabled={pendiente}>
+                  <Pause />
+                  Pausar
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => setEditarAbierto(true)}>
+                <Pencil />
+                Editar
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={() => setEditarAbierto(true)}>
-              <Pencil />
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => setEliminarAbierto(true)}
-            >
-              <Trash />
-              Borrar
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => setEliminarAbierto(true)}
+              >
+                <Trash />
+                Borrar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Diálogos: fuera del menú para que no se desmonten al cerrarlo */}

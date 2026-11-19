@@ -138,7 +138,7 @@ export default function ListaRecurrentes({
                 return (
                   <li
                     key={recurrente.recurrenteId}
-                    className="flex items-center gap-3 lg:gap-4 px-4 py-3"
+                    className="flex flex-wrap items-center gap-3 lg:flex-nowrap lg:gap-4 px-4 py-3"
                     style={{ backgroundColor: 'var(--card)' }}
                   >
                     <div
