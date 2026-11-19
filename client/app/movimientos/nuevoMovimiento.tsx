@@ -1,6 +1,6 @@
 'use client';
 
-import type { Cuenta, Categoria } from '@/components/props';
+import type { Cuenta, Categoria, Deuda } from '@/components/props';
 import { useState } from 'react';
 import MovimientoForm from './movimientoForm';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,11 @@ import { PANEL_MOVIL_ANCHO } from '@/libs/estilos';
 export default function NuevoMovimiento({
   cuentas,
   categorias,
+  deudas,
 }: {
   cuentas: Cuenta[];
   categorias: Categoria[];
+  deudas?: Deuda[];
 }) {
   const [abierto, setAbierto] = useState(false);
 
@@ -40,6 +42,7 @@ export default function NuevoMovimiento({
           <MovimientoForm
             cuentas={cuentas}
             categorias={categorias}
+            deudas={deudas}
             onExito={() => setAbierto(false)}
           />
         )}

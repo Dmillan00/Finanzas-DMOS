@@ -1,5 +1,5 @@
 'use client';
-import type { Cuenta, Categoria, Movimiento } from '@/components/props';
+import type { Cuenta, Categoria, Deuda, Movimiento } from '@/components/props';
 import { useState } from 'react';
 import { MoreVertical, Pencil, Trash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,12 @@ import EliminarMovimiento from './eliminarMovimiento';
 export default function AccionesMovimiento({
   cuentas,
   categorias,
+  deudas,
   movimiento,
 }: {
   cuentas: Cuenta[];
   categorias: Categoria[];
+  deudas?: Deuda[];
   movimiento: Movimiento;
 }) {
   const [editarAbierto, setEditarAbierto] = useState(false);
@@ -83,6 +85,7 @@ export default function AccionesMovimiento({
       <EditarMovimiento
         cuentas={cuentas}
         categorias={categorias}
+        deudas={deudas}
         movimiento={movimiento}
         abierto={editarAbierto}
         onAbiertoChange={setEditarAbierto}

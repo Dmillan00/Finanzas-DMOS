@@ -1,5 +1,5 @@
 import { formatearDia, formatearMonto } from '@/libs/formatos';
-import type { Cuenta, Categoria, Movimiento } from '@/components/props';
+import type { Cuenta, Categoria, Deuda, Movimiento } from '@/components/props';
 import { ArrowLeftRight, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import AccionesMovimiento from './accionesMovimiento';
 import TextoDesplegable from '@/components/textoDesplegable';
@@ -61,15 +61,24 @@ export default async function Movimientos({
     month: String(month),
   });
 
-  const [resCuenta, resMovimientos, resCategorias] = await Promise.all([
-    fetch(process.env.API_URL + '/cuentas'),
-    fetch(process.env.API_URL + '/movimientos?' + query),
-    fetch(process.env.API_URL + '/categorias'),
-  ]);
+  const [resCuenta, resMovimientos, resCategorias, resDeudas] =
+    await Promise.all([
+      fetch(process.env.API_URL + '/cuentas'),
+      fetch(process.env.API_URL + '/movimientos?' + query),
+      fetch(process.env.API_URL + '/categorias'),
+      fetch(process.env.API_URL + '/deudas'),
+    ]);
 
-  if (!resCuenta.ok || !resMovimientos.ok || !resCategorias.ok) {
+  if (
+    !resCuenta.ok ||
+    !resMovimientos.ok ||
+    !resCategorias.ok ||
+    !resDeudas.ok
+  ) {
     throw new Error('Error al obtener las cuentas, movimientos o categorias');
   }
+
+  const deudas: Deuda[] = await resDeudas.json();
 
   const cuentas: Cuenta[] = await resCuenta.json();
   const categorias: Categoria[] = await resCategorias.json();
@@ -149,7 +158,11 @@ export default async function Movimientos({
               Filtrar
             </Button>
           </form>
-          <NuevoMovimiento cuentas={cuentas} categorias={categorias} />
+          <NuevoMovimiento
+            cuentas={cuentas}
+            categorias={categorias}
+            deudas={deudas}
+          />
         </div>
       </div>
 
@@ -221,6 +234,7 @@ export default async function Movimientos({
                       <AccionesMovimiento
                         cuentas={cuentas}
                         categorias={categorias}
+                        deudas={deudas}
                         movimiento={movimiento}
                       />
                     </li>
