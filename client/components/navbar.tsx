@@ -101,14 +101,8 @@ export default function Navbar({ bd }: { bd: string | null }) {
                   active={path === item.href}
                 >
                   <Icono className="size-4 lg:hidden" />
-                  {/* Móvil: solo icono; el nombre se ve en la activa (y lo lee el lector de pantalla siempre) */}
-                  <span
-                    className={
-                      path === item.href ? undefined : 'sr-only lg:not-sr-only'
-                    }
-                  >
-                    {item.label}
-                  </span>
+                  {/* Móvil: solo icono (la activa se marca con la píldora); el nombre lo lee el lector de pantalla */}
+                  <span className="sr-only lg:not-sr-only">{item.label}</span>
                 </NavigationMenuLink>
               </NavigationMenuItem>
             );
