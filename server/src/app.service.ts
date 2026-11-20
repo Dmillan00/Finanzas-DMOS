@@ -4,14 +4,12 @@ import { PrismaService } from './prisma/prisma.service.js';
 @Injectable()
 export class AppService {
   private readonly prisma: PrismaService;
-  getHello(): string {
-    return 'Hello World!';
-  }
 
   constructor(prisma: PrismaService) {
     this.prisma = prisma;
   }
 
+  // Metodo para obtener la base de datos actual, Devuelve {bd: nombre}
   async getService() {
     const filas = await this.prisma.$queryRaw<
       { current_database: string }[]

@@ -15,6 +15,10 @@ import { CreateCategoriaDto } from './dto/create-categoria.dto.js';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto.js';
 import { TipoMovimientoCategoria } from '../generated/prisma/enums.js';
 
+/**
+ * CRUD de categorias bajo /categorias.
+ * GET /categorias admite el filtro opcional ?tipo=GASTO|INGRESO.
+ * */
 @Controller('categorias')
 export class CategoriasController {
   private readonly categoriasService: CategoriasService;
@@ -23,66 +27,43 @@ export class CategoriasController {
     this.categoriasService = categoriasService;
   }
 
-  // Crear categoria
+  //Crear categoria
   @Post()
-  async createCategoria(@Body() dto: CreateCategoriaDto) {
-    try {
-      return await this.categoriasService.createCategoria(dto);
-    } catch (error) {
-      console.error('Error al crear la categoria:', error);
-      throw error;
-    }
+  async create(@Body() dto: CreateCategoriaDto) {
+    return await this.categoriasService.create(dto);
   }
 
-  //Obtener Categorias
-
+  //Mostrar todas las categorias
   @Get()
-  async getCategorias(
+  async findAll(
     @Query(
       'tipo',
       new ParseEnumPipe(TipoMovimientoCategoria, { optional: true }),
     )
     tipo?: TipoMovimientoCategoria,
   ) {
-    try {
-      return await this.categoriasService.getCategorias(tipo);
-    } catch (error) {
-      console.error('Error al obtener las categorias:', error);
-      throw error;
-    }
+    return await this.categoriasService.findAll(tipo);
   }
-  //Obtener una categoria
 
+  //Mostrar una categoria
   @Get(':id')
-  async getCategoria(@Param('id', ParseIntPipe) id: number) {
-    try {
-      return await this.categoriasService.getCategoria(id);
-    } catch (error) {
-      console.error('Error al obtener la categoria:', error);
-      throw error;
-    }
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return await this.categoriasService.findOne(id);
   }
 
+  // Actualizar categoria. El tipo no se puede cambiar (400 si se envia).
+  // 404 si no existe, 409 si el nombre ya esta en uso
   @Patch(':id')
-  async updateCategoria(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCategoriaDto,
   ) {
-    try {
-      return await this.categoriasService.updateCategoria(id, dto);
-    } catch (error) {
-      console.error('Error al actualizar la categoria', error);
-      throw error;
-    }
+    return await this.categoriasService.update(id, dto);
   }
 
+  //Borrar categoria
   @Delete(':id')
-  async deleteCategoria(@Param('id', ParseIntPipe) id: number) {
-    try {
-      return await this.categoriasService.deleteCategoria(id);
-    } catch (error) {
-      console.error('Error al borrar la categoria', error);
-      throw error;
-    }
+  async delete(@Param('id', ParseIntPipe) id: number) {
+    return await this.categoriasService.delete(id);
   }
 }

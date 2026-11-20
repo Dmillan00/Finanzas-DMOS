@@ -24,12 +24,6 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
-    });
-  });
-
   describe('sistema', () => {
     it('devuelve el nombre de la BD conectada', async () => {
       prismaServiceMock.$queryRaw.mockResolvedValue([

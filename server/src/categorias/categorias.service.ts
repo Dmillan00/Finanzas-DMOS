@@ -13,22 +13,24 @@ import { Prisma, TipoMovimientoCategoria } from '../generated/prisma/client.js';
 export class CategoriasService {
   private readonly prisma: PrismaService;
 
-  private normalizarNombre(nombre: string) {
-    const limpio = nombre.trim().replace(/\s+/g, ' ');
+  // Metodo para normalizar el nombre, devuelve el mismo nombre sin espacios y con Capitalize
+  private normalizeName(nombre: string) {
+    const cleanName = nombre.trim().replace(/\s+/g, ' ');
 
-    if (!limpio) {
+    if (!cleanName) {
       throw new BadRequestException('El nombre no puede estar vacio');
     }
 
-    return limpio.charAt(0).toUpperCase() + limpio.slice(1).toLowerCase();
+    return cleanName.charAt(0).toUpperCase() + cleanName.slice(1).toLowerCase();
   }
 
   constructor(prisma: PrismaService) {
     this.prisma = prisma;
   }
 
-  async createCategoria(data: CreateCategoriaDto) {
-    const nombreLimpio = this.normalizarNombre(data.nombre);
+  // Crear Categoria
+  async create(data: CreateCategoriaDto) {
+    const name = this.normalizeName(data.nombre);
 
     if (data.limite !== undefined && data.limite !== null) {
       if (data.tipo === TipoMovimientoCategoria.INGRESO) {
@@ -42,7 +44,7 @@ export class CategoriasService {
       return await this.prisma.categoria.create({
         data: {
           ...data,
-          nombre: nombreLimpio,
+          nombre: name,
         },
       });
     } catch (error) {
@@ -58,10 +60,11 @@ export class CategoriasService {
     }
   }
 
-  async getCategorias(tipo?: TipoMovimientoCategoria) {
+  //Mostrar todas las categorias
+  async findAll(type?: TipoMovimientoCategoria) {
     return await this.prisma.categoria.findMany({
       where: {
-        tipo: tipo,
+        tipo: type,
       },
       orderBy: {
         nombre: 'asc',
@@ -69,41 +72,43 @@ export class CategoriasService {
     });
   }
 
-  async getCategoria(id: number) {
-    const categoria = await this.prisma.categoria.findUnique({
+  //Mostrar una categoria
+  async findOne(id: number) {
+    const category = await this.prisma.categoria.findUnique({
       where: { categoriaId: id },
     });
 
-    if (!categoria) {
+    if (!category) {
       throw new NotFoundException(`Categoria con ID ${id} no encontrada`);
     }
-    return categoria;
+    return category;
   }
 
-  async updateCategoria(id: number, data: UpdateCategoriaDto) {
+  //Actualizar categoria
+  async update(id: number, data: UpdateCategoriaDto) {
     if (data.nombre === null) {
       throw new BadRequestException('El nombre no puede ser null');
     }
 
     if (data.limite !== undefined && data.limite !== null) {
-      const cat = await this.prisma.categoria.findUnique({
-        where: { categoriaId: id },
-      });
-      if (cat?.tipo === TipoMovimientoCategoria.INGRESO) {
+      const category = await this.findOne(id);
+      if (category.tipo === TipoMovimientoCategoria.INGRESO) {
         throw new BadRequestException(
           'Solo las categorías de gasto pueden tener límite',
         );
       }
     }
-    const datosFinales: Prisma.CategoriaUpdateInput =
+
+    // objeto Data con la informacion saneada para mandar a update
+    const normalizeData: Prisma.CategoriaUpdateInput =
       data.nombre !== undefined
-        ? { ...data, nombre: this.normalizarNombre(data.nombre) }
+        ? { ...data, nombre: this.normalizeName(data.nombre) }
         : data;
 
     try {
       return await this.prisma.categoria.update({
         where: { categoriaId: id },
-        data: datosFinales,
+        data: normalizeData,
       });
     } catch (error) {
       if (
@@ -124,7 +129,8 @@ export class CategoriasService {
     }
   }
 
-  async deleteCategoria(id: number) {
+  //borrar categoria
+  async delete(id: number) {
     try {
       return await this.prisma.categoria.delete({
         where: { categoriaId: id },

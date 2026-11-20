@@ -28,7 +28,7 @@ describe('CategoriasService', () => {
     service = module.get<CategoriasService>(CategoriasService);
   });
 
-  describe('createCategoria', () => {
+  describe('create', () => {
     it('normaliza el nombre antes de guardar', async () => {
       prismaServiceMock.categoria.create.mockResolvedValue({
         categoriaId: 1,
@@ -36,7 +36,7 @@ describe('CategoriasService', () => {
         tipo: TipoMovimientoCategoria.GASTO,
       });
 
-      await service.createCategoria({
+      await service.create({
         nombre: '  cOMIDA   RAPIDA ',
         tipo: TipoMovimientoCategoria.GASTO,
       });
@@ -48,7 +48,7 @@ describe('CategoriasService', () => {
 
     it('lanza BadRequestException si el nombre queda vacío', async () => {
       await expect(
-        service.createCategoria({
+        service.create({
           nombre: '   ',
           tipo: TipoMovimientoCategoria.GASTO,
         }),
@@ -57,14 +57,20 @@ describe('CategoriasService', () => {
     });
   });
 
-  describe('updateCategoria', () => {
+  describe('update', () => {
     it('normaliza el nombre antes de actualizar', async () => {
+      // update llama primero a findOne, que usa findUnique para comprobar que existe
+      prismaServiceMock.categoria.findUnique.mockResolvedValue({
+        categoriaId: 1,
+        nombre: 'Ocio',
+        tipo: TipoMovimientoCategoria.GASTO,
+      });
       prismaServiceMock.categoria.update.mockResolvedValue({
         categoriaId: 1,
         nombre: 'Ocio y cine',
       });
 
-      await service.updateCategoria(1, { nombre: ' ocio   Y CINE ' });
+      await service.update(1, { nombre: ' ocio   Y CINE ' });
 
       expect(prismaServiceMock.categoria.update).toHaveBeenCalledWith({
         where: { categoriaId: 1 },
