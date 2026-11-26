@@ -22,33 +22,33 @@ export class CuentasController {
 
   //Crear cuenta
   @Post()
-  async createCuenta(@Body() dto: CreateCuentaDto) {
+  async create(@Body() dto: CreateCuentaDto) {
     try {
-      return await this.cuentasService.createCuenta(dto);
+      return await this.cuentasService.create(dto);
     } catch (error) {
       console.error('Error al crear la cuenta:', error);
       throw error;
     }
   }
 
-  //Obtener todas las cuentas
+  //Mostrar todas las cuentas
 
   @Get()
-  async getCuentas() {
+  async findAll() {
     try {
-      return await this.cuentasService.getCuentas();
+      return await this.cuentasService.findAll();
     } catch (error) {
       console.error('Error al obtener las cuentas:', error);
       throw error;
     }
   }
 
-  //Obtener Una cuenta
+  //mostrar Una cuenta
 
   @Get(':id')
-  async getCuenta(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
-      return await this.cuentasService.calcularSaldoTotal(id);
+      return await this.cuentasService.getBalance(id);
     } catch (error) {
       console.error('Error al obtener la cuenta:', error);
       throw error;
@@ -58,12 +58,12 @@ export class CuentasController {
   //Actualizar cuenta
 
   @Patch(':id')
-  async updateCuenta(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCuentaDto,
   ) {
     try {
-      return await this.cuentasService.updateCuenta(id, dto);
+      return await this.cuentasService.update(id, dto);
     } catch (error) {
       console.error('Error al actualizar la cuenta', error);
       throw error;
@@ -73,9 +73,9 @@ export class CuentasController {
   //Borrar cuenta
 
   @Delete(':id')
-  async deleteCuenta(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id', ParseIntPipe) id: number) {
     try {
-      return await this.cuentasService.deleteCuenta(id);
+      return await this.cuentasService.delete(id);
     } catch (error) {
       console.error('Error al borrar la cuenta', error);
       throw error;
