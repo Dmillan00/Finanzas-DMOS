@@ -18,7 +18,7 @@ describe('DashboardService', () => {
   };
 
   // Devuelve la suma según el tipo pedido en el where (no depende del orden de llamada)
-  const mockTotales = (ingresos: string | null, gastos: string | null) => {
+  const mockTotals = (ingresos: string | null, gastos: string | null) => {
     prismaServiceMock.movimiento.aggregate.mockImplementation(
       ({ where }: { where: { tipo: string } }) =>
         Promise.resolve({
@@ -37,7 +37,7 @@ describe('DashboardService', () => {
     // Por defecto, sin categorías ni gastos (gastosPorCategoria devuelve [])
     prismaServiceMock.categoria.findMany.mockResolvedValue([]);
     prismaServiceMock.movimiento.groupBy.mockResolvedValue([]);
-    // diaCobro se lee al instanciar el service: hay que fijarlo antes de compilar
+    // payDay se lee al instanciar el service: hay que fijarlo antes de compilar
     process.env.DIA_COBRO = '27';
 
     const module: TestingModule = await Test.createTestingModule({
@@ -54,12 +54,12 @@ describe('DashboardService', () => {
     vi.useRealTimers();
   });
 
-  describe('calcularPeriodo', () => {
+  describe('buildPeriod', () => {
     const utc = (y: number, m: number, d: number) =>
       new Date(Date.UTC(y, m - 1, d));
 
     it('antes del día de cobro empieza en el mes anterior', () => {
-      const periodo = service.calcularPeriodo(utc(2026, 11, 3), 27);
+      const periodo = service.buildPeriod(utc(2026, 11, 3), 27);
 
       expect(periodo).toEqual({
         desde: utc(2026, 10, 27),
@@ -68,7 +68,7 @@ describe('DashboardService', () => {
     });
 
     it('el mismo día de cobro empieza ese día', () => {
-      const periodo = service.calcularPeriodo(utc(2026, 11, 27), 27);
+      const periodo = service.buildPeriod(utc(2026, 11, 27), 27);
 
       expect(periodo).toEqual({
         desde: utc(2026, 11, 27),
@@ -77,7 +77,7 @@ describe('DashboardService', () => {
     });
 
     it('después del día de cobro sigue en el mismo periodo', () => {
-      const periodo = service.calcularPeriodo(utc(2026, 11, 30), 27);
+      const periodo = service.buildPeriod(utc(2026, 11, 30), 27);
 
       expect(periodo).toEqual({
         desde: utc(2026, 11, 27),
@@ -86,7 +86,7 @@ describe('DashboardService', () => {
     });
 
     it('en enero antes del cobro empieza en diciembre del año anterior', () => {
-      const periodo = service.calcularPeriodo(utc(2026, 1, 15), 27);
+      const periodo = service.buildPeriod(utc(2026, 1, 15), 27);
 
       expect(periodo).toEqual({
         desde: utc(2025, 12, 27),
@@ -95,7 +95,7 @@ describe('DashboardService', () => {
     });
 
     it('en diciembre después del cobro termina en enero del año siguiente', () => {
-      const periodo = service.calcularPeriodo(utc(2026, 12, 28), 27);
+      const periodo = service.buildPeriod(utc(2026, 12, 28), 27);
 
       expect(periodo).toEqual({
         desde: utc(2026, 12, 27),
@@ -104,7 +104,7 @@ describe('DashboardService', () => {
     });
 
     it('con día de cobro 1 el periodo es el mes natural', () => {
-      const periodo = service.calcularPeriodo(utc(2026, 3, 1), 1);
+      const periodo = service.buildPeriod(utc(2026, 3, 1), 1);
 
       expect(periodo).toEqual({
         desde: utc(2026, 3, 1),
@@ -113,11 +113,9 @@ describe('DashboardService', () => {
     });
   });
 
-  describe('calcularAnio', () => {
+  describe('buildYear', () => {
     it('el 31 de diciembre a las 23:59 sigue en ese año', () => {
-      const anio = service.calcularAnio(
-        new Date(Date.UTC(2026, 11, 31, 23, 59)),
-      );
+      const anio = service.buildYear(new Date(Date.UTC(2026, 11, 31, 23, 59)));
 
       expect(anio).toEqual({
         desde: new Date(Date.UTC(2026, 0, 1)),
@@ -126,7 +124,7 @@ describe('DashboardService', () => {
     });
 
     it('el 1 de enero a las 00:00 empieza el año nuevo', () => {
-      const anio = service.calcularAnio(new Date(Date.UTC(2027, 0, 1)));
+      const anio = service.buildYear(new Date(Date.UTC(2027, 0, 1)));
 
       expect(anio).toEqual({
         desde: new Date(Date.UTC(2027, 0, 1)),
@@ -142,7 +140,7 @@ describe('DashboardService', () => {
     });
 
     it('queda puede ser negativo', async () => {
-      mockTotales('100', '250');
+      mockTotals('100', '250');
       prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
 
       const resultado = await service.getDashboard();
@@ -151,7 +149,7 @@ describe('DashboardService', () => {
     });
 
     it('sin movimientos devuelve totales a 0 y ultimos vacío', async () => {
-      mockTotales(null, null);
+      mockTotals(null, null);
       prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
 
       const resultado = await service.getDashboard();
@@ -202,7 +200,7 @@ describe('DashboardService', () => {
     beforeEach(() => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date(Date.UTC(2026, 10, 3, 12)));
-      mockTotales(null, null);
+      mockTotals(null, null);
       prismaServiceMock.movimiento.findMany.mockResolvedValue([]);
       prismaServiceMock.categoria.findMany.mockResolvedValue(categorias);
     });

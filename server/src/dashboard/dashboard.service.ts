@@ -4,29 +4,34 @@ import { Prisma } from '../generated/prisma/client.js';
 
 @Injectable()
 export class DashboardService {
-  private readonly diaCobro = Number(process.env.DIA_COBRO);
+  private readonly payDay = Number(process.env.DIA_COBRO);
   private readonly prisma: PrismaService;
 
   constructor(prisma: PrismaService) {
     this.prisma = prisma;
   }
 
-  calcularPeriodo(hoy: Date, dia: number) {
-    const year = hoy.getUTCFullYear();
-    let mes = hoy.getUTCMonth();
+  //Periodo de cobro que contiene a `today`: empieza el día `day` (incluido) y
+  //termina el mismo día del mes siguiente (excluido). Antes de ese día, el
+  //periodo es el que empezó el mes anterior
+  buildPeriod(today: Date, day: number) {
+    const year = today.getUTCFullYear();
+    let month = today.getUTCMonth();
 
-    if (hoy.getUTCDate() < dia) {
-      mes = mes - 1;
+    if (today.getUTCDate() < day) {
+      month = month - 1;
     }
 
-    const desde = new Date(Date.UTC(year, mes, dia));
-    const hasta = new Date(Date.UTC(year, mes + 1, dia));
+    const desde = new Date(Date.UTC(year, month, day));
+    const hasta = new Date(Date.UTC(year, month + 1, day));
 
     return { desde, hasta };
   }
 
-  calcularAnio(hoy: Date) {
-    const year = hoy.getUTCFullYear();
+  //Año natural de `today`: del 1 de enero (incluido) al 1 de enero siguiente
+  //(excluido)
+  buildYear(today: Date) {
+    const year = today.getUTCFullYear();
 
     const desde = new Date(Date.UTC(year, 0, 1));
     const hasta = new Date(Date.UTC(year + 1, 0, 1));
@@ -34,33 +39,36 @@ export class DashboardService {
     return { desde, hasta };
   }
 
+  //Datos del dashboard: totales y gastos por categoría del periodo de cobro
+  //(con límites) y del año (sin límites), más los últimos movimientos
   async getDashboard() {
-    const hoy = new Date();
-    const periodo = this.calcularPeriodo(hoy, this.diaCobro);
-    const anio = this.calcularAnio(hoy);
+    const today = new Date();
+    const period = this.buildPeriod(today, this.payDay);
+    const year = this.buildYear(today);
 
-    const [totales, ultimos, gastosPeriodo, gastosAnio] = await Promise.all([
-      this.totales(periodo),
-      this.ultimosMovimientos(),
-      this.gastosPorCategoria(periodo, true),
-      this.gastosPorCategoria(anio, false),
+    const [totals, latest, periodExpenses, yearExpenses] = await Promise.all([
+      this.totals(period),
+      this.lastMovements(),
+      this.expensesByCategory(period, true),
+      this.expensesByCategory(year, false),
     ]);
 
     return {
-      gastosPorCategoria: { periodo: gastosPeriodo, anio: gastosAnio },
-      periodo,
-      totales,
-      ultimos,
+      gastosPorCategoria: { periodo: periodExpenses, anio: yearExpenses },
+      periodo: period,
+      totales: totals,
+      ultimos: latest,
     };
   }
 
-  private async totales(periodo: { desde: Date; hasta: Date }) {
-    const ingresos = this.prisma.movimiento.aggregate({
+  //Ingresos, gastos y lo que queda en el periodo. Las transferencias no cuentan
+  private async totals(period: { desde: Date; hasta: Date }) {
+    const income = this.prisma.movimiento.aggregate({
       where: {
         tipo: 'INGRESO',
         fecha: {
-          gte: periodo.desde,
-          lt: periodo.hasta,
+          gte: period.desde,
+          lt: period.hasta,
         },
       },
       _sum: {
@@ -68,12 +76,12 @@ export class DashboardService {
       },
     });
 
-    const gastos = this.prisma.movimiento.aggregate({
+    const expenses = this.prisma.movimiento.aggregate({
       where: {
         tipo: 'GASTO',
         fecha: {
-          gte: periodo.desde,
-          lt: periodo.hasta,
+          gte: period.desde,
+          lt: period.hasta,
         },
       },
       _sum: {
@@ -81,24 +89,26 @@ export class DashboardService {
       },
     });
 
-    const [ingresosResultado, gastosResultado] = await Promise.all([
-      ingresos,
-      gastos,
+    const [incomeResult, expensesResult] = await Promise.all([
+      income,
+      expenses,
     ]);
 
-    const totalIngresos = ingresosResultado._sum.monto ?? new Prisma.Decimal(0);
-    const totalGastos = gastosResultado._sum.monto ?? new Prisma.Decimal(0);
+    const totalIncome = incomeResult._sum.monto ?? new Prisma.Decimal(0);
+    const totalExpense = expensesResult._sum.monto ?? new Prisma.Decimal(0);
 
-    const resto = totalIngresos.minus(totalGastos);
+    const remaining = totalIncome.minus(totalExpense);
 
     return {
-      ingresos: totalIngresos.toString(),
-      gastos: totalGastos.toString(),
-      queda: resto.toString(),
+      ingresos: totalIncome.toString(),
+      gastos: totalExpense.toString(),
+      queda: remaining.toString(),
     };
   }
 
-  private async ultimosMovimientos() {
+  //Los 5 últimos movimientos de ingreso o gasto, por orden de creación (a
+  //propósito: sale lo último apuntado aunque su fecha sea anterior)
+  private async lastMovements() {
     return this.prisma.movimiento.findMany({
       where: {
         tipo: { in: ['GASTO', 'INGRESO'] },
@@ -115,11 +125,14 @@ export class DashboardService {
     });
   }
 
-  private async gastosPorCategoria(
-    rango: { desde: Date; hasta: Date },
-    conLimite: boolean,
+  //Gasto de cada categoría de GASTO dentro del rango, de mayor a menor. Con
+  //`withLimit`, las que tienen límite añaden cuánto va dentro, cuánto se pasa,
+  //cuánto queda y el porcentaje; el resto lleva esos campos a null
+  private async expensesByCategory(
+    range: { desde: Date; hasta: Date },
+    withLimit: boolean,
   ) {
-    const categorias = this.prisma.categoria.findMany({
+    const categoriesQuery = this.prisma.categoria.findMany({
       where: {
         tipo: 'GASTO',
       },
@@ -127,39 +140,46 @@ export class DashboardService {
       orderBy: { nombre: 'asc' },
     });
 
-    const sumas = this.prisma.movimiento.groupBy({
+    const sumsQuery = this.prisma.movimiento.groupBy({
       by: 'categoriaId',
       where: {
         tipo: 'GASTO',
         fecha: {
-          gte: rango.desde,
-          lt: rango.hasta,
+          gte: range.desde,
+          lt: range.hasta,
         },
       },
       _sum: { monto: true },
     });
 
-    const [cats, grupos] = await Promise.all([categorias, sumas]);
+    const [categories, groups] = await Promise.all([
+      categoriesQuery,
+      sumsQuery,
+    ]);
 
-    const mapSums = new Map(grupos.map((g) => [g.categoriaId, g._sum.monto]));
+    //Suma de gasto por id de categoría, para leerla sin recorrer la lista
+    const sumsByCategoryId = new Map(
+      groups.map((g) => [g.categoriaId, g._sum.monto]),
+    );
 
-    const result = cats.map((cat) => {
-      const importe = mapSums.get(cat.categoriaId) ?? new Prisma.Decimal(0);
+    const result = categories.map((category) => {
+      const importe =
+        sumsByCategoryId.get(category.categoriaId) ?? new Prisma.Decimal(0);
       const base = {
-        categoriaId: cat.categoriaId,
-        nombre: cat.nombre,
+        categoriaId: category.categoriaId,
+        nombre: category.nombre,
         importe,
       };
 
-      if (conLimite && cat.limite !== null) {
-        const exceso = Prisma.Decimal.max(importe.minus(cat.limite), 0);
-        const dentro = Prisma.Decimal.min(importe, cat.limite);
-        const restante = Prisma.Decimal.max(cat.limite.minus(importe), 0);
-        const porcentaje = importe.div(cat.limite).times(100).toFixed(0);
+      if (withLimit && category.limite !== null) {
+        const exceso = Prisma.Decimal.max(importe.minus(category.limite), 0);
+        const dentro = Prisma.Decimal.min(importe, category.limite);
+        const restante = Prisma.Decimal.max(category.limite.minus(importe), 0);
+        const porcentaje = importe.div(category.limite).times(100).toFixed(0);
 
         return {
           ...base,
-          limite: cat.limite,
+          limite: category.limite,
           exceso,
           dentro,
           restante,
@@ -178,7 +198,8 @@ export class DashboardService {
 
     result.sort((a, b) => b.importe.comparedTo(a.importe));
 
-    const salida = result.map((item) => ({
+    //Los importes viajan al front como texto (Decimal)
+    const output = result.map((item) => ({
       ...item,
       importe: item.importe.toString(),
       limite: item.limite?.toString() ?? null,
@@ -187,6 +208,6 @@ export class DashboardService {
       restante: item.restante?.toString() ?? null,
     }));
 
-    return salida;
+    return output;
   }
 }

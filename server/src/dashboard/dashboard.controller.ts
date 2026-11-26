@@ -10,13 +10,9 @@ export class DashboardController {
     this.dashboardService = dashboardService;
   }
 
+  //Datos del dashboard
   @Get()
-  async getDashboard() {
-    try {
-      return await this.dashboardService.getDashboard();
-    } catch (error) {
-      console.error('Error al mostrar el dashboard:', error);
-      throw error;
-    }
+  getDashboard() {
+    return this.dashboardService.getDashboard();
   }
 }
