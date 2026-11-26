@@ -19,6 +19,12 @@ type BalanceTotals = {
 export class CuentasService {
   private readonly prisma: PrismaService;
 
+  constructor(prisma: PrismaService) {
+    this.prisma = prisma;
+  }
+
+  //Calcula el saldo actual de una cuenta a partir de sus totales ya leídos.
+  //No consulta la BD: así lo comparten addBalance (una cuenta) y findAll (todas)
   private buildBalance(cuenta: Cuenta, totals: BalanceTotals) {
     const saldoTotal = new Prisma.Decimal(cuenta.saldoInicial)
       .plus(totals.income)
@@ -29,6 +35,7 @@ export class CuentasService {
     return { ...cuenta, saldoActual: saldoTotal };
   }
 
+  //Añade el saldo a una sola cuenta, leyendo sus totales con aggregate
   private async addBalance(cuenta: Cuenta) {
     const cuentaId = cuenta.cuentaId;
 
@@ -82,13 +89,10 @@ export class CuentasService {
     });
   }
 
+  //Mostrar una cuenta con su saldo
   async getBalance(cuentaId: number) {
     const cuenta = await this.findOne(cuentaId);
     return await this.addBalance(cuenta);
-  }
-
-  constructor(prisma: PrismaService) {
-    this.prisma = prisma;
   }
 
   //Crear cuenta

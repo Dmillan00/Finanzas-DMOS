@@ -64,7 +64,9 @@ describe('CuentasService', () => {
             // Entrante (cuentaDestinoId) = 20; saliente (cuentaBaseId) = 30
             total = where.cuentaDestinoId ? 20 : 30;
           }
-          return Promise.resolve({ _sum: { monto: new Prisma.Decimal(total) } });
+          return Promise.resolve({
+            _sum: { monto: new Prisma.Decimal(total) },
+          });
         },
       );
 

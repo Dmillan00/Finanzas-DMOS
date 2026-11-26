@@ -22,63 +22,31 @@ export class CuentasController {
 
   //Crear cuenta
   @Post()
-  async create(@Body() dto: CreateCuentaDto) {
-    try {
-      return await this.cuentasService.create(dto);
-    } catch (error) {
-      console.error('Error al crear la cuenta:', error);
-      throw error;
-    }
+  create(@Body() dto: CreateCuentaDto) {
+    return this.cuentasService.create(dto);
   }
 
   //Mostrar todas las cuentas
-
   @Get()
-  async findAll() {
-    try {
-      return await this.cuentasService.findAll();
-    } catch (error) {
-      console.error('Error al obtener las cuentas:', error);
-      throw error;
-    }
+  findAll() {
+    return this.cuentasService.findAll();
   }
 
-  //mostrar Una cuenta
-
+  //Mostrar una cuenta con su saldo
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    try {
-      return await this.cuentasService.getBalance(id);
-    } catch (error) {
-      console.error('Error al obtener la cuenta:', error);
-      throw error;
-    }
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.cuentasService.getBalance(id);
   }
 
   //Actualizar cuenta
-
   @Patch(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateCuentaDto,
-  ) {
-    try {
-      return await this.cuentasService.update(id, dto);
-    } catch (error) {
-      console.error('Error al actualizar la cuenta', error);
-      throw error;
-    }
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCuentaDto) {
+    return this.cuentasService.update(id, dto);
   }
 
   //Borrar cuenta
-
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number) {
-    try {
-      return await this.cuentasService.delete(id);
-    } catch (error) {
-      console.error('Error al borrar la cuenta', error);
-      throw error;
-    }
+  delete(@Param('id', ParseIntPipe) id: number) {
+    return this.cuentasService.delete(id);
   }
 }

@@ -75,6 +75,67 @@ describe('Cuentas (e2e)', () => {
     expect(Number(cuenta.saldoActual)).toBe(500);
   });
 
+  // Protege que findAll (groupBy + Maps) no mezcle los totales de unas cuentas
+  // con los de otras: se compara con getBalance (aggregate) y con el cálculo a mano
+  it('GET /cuentas y GET /cuentas/:id dan el mismo saldo con movimientos entre cuentas', async () => {
+    const cuentaA = await prisma.cuenta.create({
+      data: { nombre: 'Cuenta E2E saldo A', saldoInicial: 100 },
+    });
+    const cuentaB = await prisma.cuenta.create({
+      data: { nombre: 'Cuenta E2E saldo B', saldoInicial: 50 },
+    });
+    const idA = cuentaA.cuentaId;
+    const idB = cuentaB.cuentaId;
+    idsCreados.push(idA, idB);
+
+    // Importes distintos en cada movimiento para que un cruce se note
+    await prisma.movimiento.createMany({
+      data: [
+        { nombre: 'Ingreso A', monto: 30, tipo: 'INGRESO', cuentaBaseId: idA },
+        { nombre: 'Gasto A', monto: 10, tipo: 'GASTO', cuentaBaseId: idA },
+        { nombre: 'Ingreso B', monto: 7, tipo: 'INGRESO', cuentaBaseId: idB },
+        { nombre: 'Gasto B', monto: 3, tipo: 'GASTO', cuentaBaseId: idB },
+        {
+          nombre: 'Transferencia A a B',
+          monto: 20,
+          tipo: 'TRANSFERENCIA',
+          cuentaBaseId: idA,
+          cuentaDestinoId: idB,
+        },
+        {
+          nombre: 'Transferencia B a A',
+          monto: 5,
+          tipo: 'TRANSFERENCIA',
+          cuentaBaseId: idB,
+          cuentaDestinoId: idA,
+        },
+      ],
+    });
+
+    const lista = await request(app.getHttpServer())
+      .get('/cuentas')
+      .expect(200);
+    const saldoEnLista = (id: number) =>
+      Number(
+        lista.body.find((c: { cuentaId: number }) => c.cuentaId === id)
+          .saldoActual,
+      );
+
+    const individualA = await request(app.getHttpServer())
+      .get(`/cuentas/${idA}`)
+      .expect(200);
+    const individualB = await request(app.getHttpServer())
+      .get(`/cuentas/${idB}`)
+      .expect(200);
+
+    // A: 100 + 30 - 10 - 20 + 5 = 105
+    // B: 50 + 7 - 3 + 20 - 5 = 69
+    expect(saldoEnLista(idA)).toBe(105);
+    expect(saldoEnLista(idB)).toBe(69);
+    expect(Number(individualA.body.saldoActual)).toBe(105);
+    expect(Number(individualB.body.saldoActual)).toBe(69);
+  });
+
   it('GET /cuentas/:id devuelve la cuenta con saldoActual', async () => {
     const res = await request(app.getHttpServer())
       .get(`/cuentas/${cuentaCreadaId}`)
